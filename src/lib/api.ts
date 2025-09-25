@@ -7,7 +7,10 @@ export const api = {
     const query = supabase.from('injuries').select('*').order('date_reported', { ascending: false })
     const { data, error } = studentId ? await query.eq('student_id', studentId) : await query
     if (error) throw error
-    return data
+    const ids = Array.from(new Set((data || []).map((i: any) => i.student_id)))
+    const { data: students } = await supabase.from('profiles').select('id, full_name, sport').in('id', ids)
+    const map = new Map((students || []).map((s: any) => [s.id, s]))
+    return (data || []).map((i: any) => ({ ...i, student_profile: map.get(i.student_id) || null }))
   },
 
   async createInjury(injuryData: any) {

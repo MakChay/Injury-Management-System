@@ -8,6 +8,7 @@ create table if not exists profiles (
   profile_pic text,
   phone text,
   student_number text,
+  sport text,
   specialization text,
   bio text,
   created_at timestamptz not null default now(),
@@ -244,6 +245,16 @@ create policy "storage read own and related or admin" on storage.objects
       )
     )
   );
+
+-- Optional migration for existing projects: add sport column if missing
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'sport'
+  ) then
+    alter table profiles add column sport text;
+  end if;
+end $$;
 
 create policy "storage insert owner only" on storage.objects
   for insert with check (
