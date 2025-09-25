@@ -59,10 +59,7 @@ export function RegisterForm() {
         </motion.div>
       )}
 
-      <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
-        <p className="font-medium mb-1">Demo Mode:</p>
-        <p>Fill out the form to create a mock account. All data is stored locally.</p>
-      </div>
+      
 
       <div className="grid grid-cols-1 gap-4">
         <div>

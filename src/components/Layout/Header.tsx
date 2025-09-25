@@ -70,13 +70,13 @@ export function Header() {
                     {profile?.role}
                   </p>
                 </div>
-                <button
-                  onClick={signOut}
+                <a
+                  href="/logout"
                   className="w-full flex items-center space-x-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sign Out</span>
-                </button>
+                </a>
               </motion.div>
             )}
           </div>
