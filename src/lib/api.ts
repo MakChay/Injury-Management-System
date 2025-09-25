@@ -311,6 +311,21 @@ export const api = {
     if (error) throw error
     return data
   },
+  async updateTreatmentPlan(planId: string, updates: { title?: string; phases?: any }) {
+    if (!isSupabaseEnabled || !supabase) return { id: planId, ...updates }
+    const { data, error } = await supabase.from('treatment_plans').update(updates).eq('id', planId).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async getPractitionerPlans(practitioner_id: string) {
+    if (!isSupabaseEnabled || !supabase) return []
+    const { data: asg } = await supabase.from('practitioner_assignments').select('id').eq('practitioner_id', practitioner_id)
+    const ids = (asg || []).map((a: any) => a.id)
+    if (ids.length === 0) return []
+    const { data, error } = await supabase.from('treatment_plans').select('*').in('assignment_id', ids).order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  },
 
   async getNotificationPreferences(userId: string) {
     if (!isSupabaseEnabled || !supabase) {

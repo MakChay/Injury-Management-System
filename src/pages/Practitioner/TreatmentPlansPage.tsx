@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Stethoscope, NotebookPen, ClipboardList, FilePlus } from 'lucide-react'
+import { Stethoscope, NotebookPen, ClipboardList, FilePlus, PlayCircle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { api } from '../../lib/api'
+import { MediaLibrary } from '../../components/MediaLibrary'
 
 export function TreatmentPlansPage() {
   const { user } = useAuth()
@@ -13,6 +14,7 @@ export function TreatmentPlansPage() {
   const [selectedTemplate, setSelectedTemplate] = useState('')
   const [creating, setCreating] = useState(false)
   const [createdPlan, setCreatedPlan] = useState<any | null>(null)
+  const [editing, setEditing] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -38,6 +40,7 @@ export function TreatmentPlansPage() {
     try {
       const plan = await api.createPlanFromTemplate(selectedAssignment, selectedTemplate)
       setCreatedPlan(plan)
+      setEditing(true)
     } finally {
       setCreating(false)
     }
@@ -109,13 +112,42 @@ export function TreatmentPlansPage() {
               {createdPlan.phases.map((p: any, idx: number) => (
                 <div key={idx} className="border rounded p-3">
                   <div className="font-medium">{p.title}</div>
-                  <ul className="list-disc ml-5 text-sm text-gray-700">
+                  <ul className="ml-5 text-sm text-gray-700 space-y-2">
                     {p.exercises.map((ex: any, i: number) => (
-                      <li key={i}>{ex.name}</li>
+                      <li key={i} className="list-none flex items-center space-x-2">
+                        {editing ? (
+                          <>
+                            <input className="border rounded px-2 py-1 w-56" value={ex.name} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].name = e.target.value; setCreatedPlan(next) }} />
+                            <input type="number" className="border rounded px-2 py-1 w-20" placeholder="sets" value={ex.sets || ''} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].sets = Number(e.target.value)||undefined; setCreatedPlan(next) }} />
+                            <input type="number" className="border rounded px-2 py-1 w-20" placeholder="reps" value={ex.reps || ''} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].reps = Number(e.target.value)||undefined; setCreatedPlan(next) }} />
+                            <input className="border rounded px-2 py-1 flex-1" placeholder="video url" value={ex.video_url || ''} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].video_url = e.target.value; setCreatedPlan(next) }} />
+                          </>
+                        ) : (
+                          <>
+                            {ex.video_url && <a className="text-blue-600 flex items-center space-x-1" href={ex.video_url} target="_blank" rel="noreferrer"><PlayCircle className="w-4 h-4" /><span>Video</span></a>}
+                            <span>{ex.name}{ex.sets ? ` • ${ex.sets}x${ex.reps || ''}` : ''}</span>
+                          </>
+                        )}
+                      </li>
                     ))}
                   </ul>
+                  {editing && (
+                    <div className="mt-2">
+                      <MediaLibrary onSelect={(m) => { const next = { ...createdPlan }; next.phases[idx].exercises.push({ name: m.name, video_url: m.video_url }); setCreatedPlan(next) }} />
+                    </div>
+                  )}
                 </div>
               ))}
+            </div>
+            <div className="flex justify-end space-x-2">
+              {!editing ? (
+                <button className="px-3 py-2 border rounded" onClick={() => setEditing(true)}>Edit</button>
+              ) : (
+                <>
+                  <button className="px-3 py-2 border rounded" onClick={() => setEditing(false)}>Cancel</button>
+                  <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={async () => { const saved = await api.updateTreatmentPlan(createdPlan.id, { phases: createdPlan.phases, title: createdPlan.title }); setCreatedPlan(saved); setEditing(false) }}>Save Changes</button>
+                </>
+              )}
             </div>
           </div>
         </div>
