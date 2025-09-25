@@ -1,1 +1,0 @@
-import{j as t}from"./ui-D_jLh_Lr.js";import{A as e,R as r}from"./index-D5lOMFz8.js";import"./vendor-B9gohGc-.js";import"./supabase-DOoHAlwf.js";import"./router-CIHs1KQM.js";function a(){return t.jsx(e,{title:"Create Account",subtitle:"Join the DUT Athletic Injury Management system",children:t.jsx(r,{})})}export{a as RegisterPage};

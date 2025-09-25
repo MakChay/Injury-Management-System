@@ -1,1 +1,0 @@
-import{j as t}from"./ui-D_jLh_Lr.js";import{A as o,L as i}from"./index-D5lOMFz8.js";import"./vendor-B9gohGc-.js";import"./supabase-DOoHAlwf.js";import"./router-CIHs1KQM.js";function s(){return t.jsx(o,{title:"Sign In",subtitle:"Welcome back to DUT Athletic Injury Management",children:t.jsx(i,{})})}export{s as LoginPage};
