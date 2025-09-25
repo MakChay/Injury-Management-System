@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { logger } from '../../lib/logger'
 import { motion } from 'framer-motion'
 import { Upload, File, Download, Trash2, Search, Filter } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -12,7 +13,7 @@ export function FilesPage() {
     const files = e.target.files
     if (files && files.length > 0) {
       // Handle file upload
-      console.log('Uploading files:', files)
+      logger.debug('Uploading files:', files)
     }
   }
 

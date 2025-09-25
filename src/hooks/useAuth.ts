@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
 import { mockAuth, type User } from '../lib/mockData'
 import { supabase, isSupabaseEnabled } from '../lib/supabase'
+import { logger } from '../lib/logger'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Force no user for testing - ensures register page shows first
+  // Development mode: Force no user to show register page first
+  // Remove this in production or set via environment variable
   useEffect(() => {
-    if (user) {
-      console.log('FORCING USER TO NULL FOR TESTING')
+    if (process.env.NODE_ENV === 'development' && process.env.VITE_FORCE_REGISTER_FIRST === 'true' && user) {
+      logger.debug('Development mode: Forcing register page first')
       setUser(null)
       setProfile(null)
     }
@@ -92,7 +94,7 @@ export function useAuth() {
           }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error)
+        logger.error('Auth initialization error:', error as Error)
       } finally {
         setLoading(false)
       }
@@ -253,7 +255,7 @@ export function useAuth() {
         await mockAuth.signOut()
       }
     } catch (error) {
-      console.error('Sign out error:', error)
+      logger.error('Sign out error:', error as Error)
     } finally {
       setUser(null)
       setProfile(null)

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { logger } from '../../lib/logger'
 import { useAuth } from '../../hooks/useAuth'
 import { AuthLayout } from '../../components/Auth/AuthLayout'
 import { RefreshCw } from 'lucide-react'
@@ -11,7 +12,7 @@ export function LogoutPage() {
       try {
         await signOut()
       } catch (error) {
-        console.error('Logout error:', error)
+        logger.error('Logout error:', error as Error)
       }
     }
 

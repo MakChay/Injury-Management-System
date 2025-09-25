@@ -1,33 +1,50 @@
 import { useState, useCallback } from 'react'
+import { logger } from '../lib/logger'
 import { pushToast } from '../components/Toaster'
 
 interface ErrorState {
   hasError: boolean
   error: Error | null
   retryCount: number
+  lastRetryTime: number | null
 }
 
-export function useErrorHandler() {
+interface RetryOptions {
+  maxRetries?: number
+  retryDelay?: number
+  exponentialBackoff?: boolean
+}
+
+export function useErrorHandler(options: RetryOptions = {}) {
+  const {
+    maxRetries = 3,
+    retryDelay = 1000,
+    exponentialBackoff = true
+  } = options
+
   const [errorState, setErrorState] = useState<ErrorState>({
     hasError: false,
     error: null,
-    retryCount: 0
+    retryCount: 0,
+    lastRetryTime: null
   })
 
   const handleError = useCallback((error: Error, context?: string) => {
-    console.error(`Error in ${context || 'unknown context'}:`, error)
+    logger.error(`Error in ${context || 'unknown context'}:`, error)
     
     setErrorState(prev => ({
       hasError: true,
       error,
-      retryCount: prev.retryCount + 1
+      retryCount: prev.retryCount + 1,
+      lastRetryTime: Date.now()
     }))
 
     // Show user-friendly error message
-    const errorMessage = getErrorMessage(error)
+    const errorMessage = getErrorMessage(error, context)
     pushToast({
       type: 'error',
-      message: errorMessage
+      message: errorMessage,
+      duration: 5000
     })
   }, [])
 
@@ -35,46 +52,98 @@ export function useErrorHandler() {
     setErrorState({
       hasError: false,
       error: null,
-      retryCount: 0
+      retryCount: 0,
+      lastRetryTime: null
     })
   }, [])
 
-  const retry = useCallback((retryFn: () => Promise<void>) => {
-    clearError()
-    retryFn().catch((error) => handleError(error, 'retry'))
-  }, [clearError, handleError])
+  const retry = useCallback(async (retryFn: () => Promise<void> | void) => {
+    if (errorState.retryCount >= maxRetries) {
+      pushToast({
+        type: 'error',
+        message: 'Maximum retry attempts reached. Please refresh the page or contact support.'
+      })
+      return
+    }
+
+    // Calculate delay with exponential backoff
+    const delay = exponentialBackoff 
+      ? retryDelay * Math.pow(2, errorState.retryCount)
+      : retryDelay
+
+    // Show retry message
+    pushToast({
+      type: 'info',
+      message: `Retrying... (${errorState.retryCount + 1}/${maxRetries})`,
+      duration: delay
+    })
+
+    // Wait for delay
+    await new Promise(resolve => setTimeout(resolve, delay))
+
+    try {
+      clearError()
+      await retryFn()
+    } catch (error) {
+      handleError(error as Error, 'retry operation')
+    }
+  }, [errorState.retryCount, maxRetries, retryDelay, exponentialBackoff, clearError, handleError])
+
+  const canRetry = errorState.retryCount < maxRetries
+  const isRetrying = errorState.lastRetryTime && (Date.now() - errorState.lastRetryTime) < 5000
 
   return {
     ...errorState,
     handleError,
     clearError,
-    retry
+    retry,
+    canRetry,
+    isRetrying
   }
 }
 
-function getErrorMessage(error: Error): string {
+function getErrorMessage(error: Error, context?: string): string {
+  const errorMessage = error.message.toLowerCase()
+  
   // Network errors
-  if (error.message.includes('fetch')) {
-    return 'Unable to connect to the server. Please check your internet connection.'
+  if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('connection')) {
+    return 'Network error. Please check your internet connection and try again.'
   }
   
   // Authentication errors
-  if (error.message.includes('auth') || error.message.includes('unauthorized')) {
-    return 'Your session has expired. Please log in again.'
+  if (errorMessage.includes('auth') || errorMessage.includes('unauthorized') || errorMessage.includes('401')) {
+    return 'Authentication error. Please log in again.'
   }
   
   // Permission errors
-  if (error.message.includes('permission') || error.message.includes('forbidden')) {
+  if (errorMessage.includes('forbidden') || errorMessage.includes('403')) {
     return 'You don\'t have permission to perform this action.'
   }
   
-  // Validation errors
-  if (error.message.includes('validation') || error.message.includes('invalid')) {
-    return 'Please check your input and try again.'
+  // Not found errors
+  if (errorMessage.includes('not found') || errorMessage.includes('404')) {
+    return 'The requested resource was not found.'
   }
   
-  // Generic error
-  return 'Something went wrong. Please try again.'
+  // Server errors
+  if (errorMessage.includes('500') || errorMessage.includes('server error')) {
+    return 'Server error. Please try again later or contact support.'
+  }
+  
+  // Timeout errors
+  if (errorMessage.includes('timeout')) {
+    return 'Request timed out. Please try again.'
+  }
+  
+  // Validation errors
+  if (errorMessage.includes('validation') || errorMessage.includes('invalid')) {
+    return 'Invalid data provided. Please check your input and try again.'
+  }
+  
+  // Generic error with context
+  return context 
+    ? `Error in ${context}. Please try again.`
+    : 'An unexpected error occurred. Please try again.'
 }
 
 export function useAsyncOperation<T extends any[], R>(

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { logger } from '../../lib/logger'
 import { motion } from 'framer-motion'
 import { MessageSquare, Send, Search, Plus } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -26,7 +27,7 @@ export function MessagesPage() {
       const data = await api.getMessages(user.id)
       setMessages(data)
     } catch (error) {
-      console.error('Error fetching messages:', error)
+      logger.error('Error fetching messages:', error as Error)
     } finally {
       setLoading(false)
     }
@@ -46,7 +47,7 @@ export function MessagesPage() {
       setNewMessage('')
       fetchMessages()
     } catch (error) {
-      console.error('Error sending message:', error)
+      logger.error('Error sending message:', error as Error)
     }
   }
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { logger } from '../../lib/logger'
 import { motion } from 'framer-motion'
 import { Activity, Calendar, Save, CheckCircle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -33,7 +34,7 @@ export function DailyCheckInPage() {
       pushToast({ type: 'success', message: 'Daily check-in submitted successfully!' })
       setSubmitted(true)
     } catch (error) {
-      console.error('Error submitting check-in:', error)
+      logger.error('Error submitting check-in:', error as Error)
       pushToast({ type: 'error', message: 'Failed to submit check-in. Please try again.' })
     } finally {
       setLoading(false)

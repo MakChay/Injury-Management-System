@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { logger } from '../../lib/logger'
 import { motion } from 'framer-motion'
 import { User, Save, Camera, Mail, Phone, MapPin } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -33,9 +34,9 @@ export function ProfilePage() {
     try {
       // Update profile logic would go here
       await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-      console.log('Profile updated:', formData)
+      logger.debug('Profile updated:', formData)
     } catch (error) {
-      console.error('Error updating profile:', error)
+      logger.error('Error updating profile:', error as Error)
     } finally {
       setLoading(false)
     }
