@@ -151,8 +151,10 @@ export function useAuth() {
         })
         if (error) return { error }
         const newUser = data.user
+        console.log('Signup response:', { user: newUser, session: data.session })
         // If email confirmations are enabled, session may be null; defer profile creation
         if (!data.session) {
+          console.log('No session - email verification required')
           return { error: null, pendingVerification: true }
         }
         if (!newUser) return { error: new Error('No user created') }
