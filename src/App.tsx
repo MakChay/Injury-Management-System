@@ -55,7 +55,7 @@ function App() {
         {/* Public routes */}
         <Route
           path="/login"
-          element={user ? <Navigate to="/login" replace /> : <LoginPage />}
+          element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />}
         />
         {/* Auth aliases */}
         <Route
@@ -327,8 +327,8 @@ function App() {
         />
 
         {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+        <Route path="*" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
       </Routes>
     </Router>
   )
