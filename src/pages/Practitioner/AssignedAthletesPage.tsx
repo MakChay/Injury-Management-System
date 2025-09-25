@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Users, Search, Filter, Calendar, MessageSquare, Activity, Clock, User } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { mockAPI, mockUsers, type Assignment, type User as UserType } from '../../lib/mockData'
+import { api } from '../../lib/api'
 
 interface AssignmentWithDetails extends Assignment {
   student?: UserType
@@ -39,7 +40,7 @@ export function AssignedAthletesPage() {
 
     try {
       setLoading(true)
-      const data = await mockAPI.getAssignments(user.id)
+      const data = await api.getAssignments(user.id)
       
       // Enrich assignments with student and injury data
       const enrichedAssignments: AssignmentWithDetails[] = data.map(assignment => {

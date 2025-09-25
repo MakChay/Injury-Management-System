@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, MapPin, Activity, AlertTriangle, FileText, Clock } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import { mockAPI } from '../../lib/mockData'
+import { api } from '../../lib/api'
 
 const injuryTypes = [
   'Ankle Sprain', 'Knee Injury', 'Hamstring Strain', 'Shoulder Dislocation',
@@ -45,7 +45,7 @@ export function ReportInjuryPage() {
     previous_injury_details: ''
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!user) return
 
@@ -66,7 +66,7 @@ export function ReportInjuryPage() {
         previous_injury_details: formData.previous_injury_details
       }
 
-      await mockAPI.createInjury(injuryData)
+      await api.createInjury(injuryData)
       navigate('/my-injuries', { 
         state: { message: 'Injury reported successfully! A health coordinator will review and assign a practitioner.' }
       })
