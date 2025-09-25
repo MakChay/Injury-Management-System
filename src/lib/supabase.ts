@@ -68,6 +68,8 @@ export type Database = {
           body_part: string
           date_occurred: string
           date_reported: string
+          date_returned: string | null
+          days_lost: number | null
           status: 'reported' | 'assigned' | 'in_treatment' | 'recovering' | 'resolved'
           activity_when_injured: string | null
           pain_level: number | null
@@ -81,6 +83,8 @@ export type Database = {
           description: string
           body_part: string
           date_occurred: string
+          date_returned?: string | null
+          days_lost?: number | null
           activity_when_injured?: string | null
           pain_level?: number | null
         }
@@ -91,6 +95,8 @@ export type Database = {
           body_part?: string
           date_occurred?: string
           status?: 'reported' | 'assigned' | 'in_treatment' | 'recovering' | 'resolved'
+          date_returned?: string | null
+          days_lost?: number | null
           activity_when_injured?: string | null
           pain_level?: number | null
         }

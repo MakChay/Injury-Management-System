@@ -27,6 +27,8 @@ create table if not exists injuries (
   body_part text not null,
   date_occurred date not null,
   date_reported timestamptz not null default now(),
+  date_returned timestamptz,
+  days_lost int,
   status text not null default 'reported' check (status in ('reported','assigned','in_treatment','recovering','resolved')),
   activity_when_injured text,
   pain_level int,
