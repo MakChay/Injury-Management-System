@@ -98,6 +98,7 @@ export function useAuth() {
     try {
       if (isSupabaseEnabled && supabase) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+        console.log('SignIn response:', { user: data.user, session: data.session, error })
         if (error) return { error }
         const sessionUser = data.user
         if (!sessionUser) return { error: new Error('No user returned') }
@@ -107,6 +108,7 @@ export function useAuth() {
           .eq('id', sessionUser.id)
           .single()
         if (profileError) return { error: profileError as any }
+        console.log('Profile data:', profileRow)
         const authedUser: User = {
           id: profileRow.id,
           email: profileRow.email,
@@ -120,6 +122,7 @@ export function useAuth() {
           created_at: profileRow.created_at,
           updated_at: profileRow.updated_at,
         }
+        console.log('Setting user:', authedUser)
         setUser(authedUser)
         setProfile(authedUser)
         return { error: null }

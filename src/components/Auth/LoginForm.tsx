@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -10,9 +10,18 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [shouldNavigate, setShouldNavigate] = useState(false)
   
-  const { signIn } = useAuth()
+  const { signIn, user } = useAuth()
   const navigate = useNavigate()
+
+  // Navigate to dashboard when user is set after successful login
+  useEffect(() => {
+    if (shouldNavigate && user) {
+      navigate('/dashboard')
+      setShouldNavigate(false)
+    }
+  }, [user, shouldNavigate, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,12 +30,16 @@ export function LoginForm() {
 
     try {
       const { error } = await signIn(email, password)
+      console.log('Login result:', { error })
       if (error) {
         setError(error.message)
       } else {
-        navigate('/dashboard')
+        console.log('Setting shouldNavigate to true for login')
+        // Set flag to navigate when user state is updated
+        setShouldNavigate(true)
       }
     } catch (error) {
+      console.error('Login error:', error)
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)
