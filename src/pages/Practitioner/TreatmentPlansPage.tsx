@@ -15,6 +15,8 @@ export function TreatmentPlansPage() {
   const [creating, setCreating] = useState(false)
   const [createdPlan, setCreatedPlan] = useState<any | null>(null)
   const [editing, setEditing] = useState(false)
+  const [history, setHistory] = useState<any[]>([])
+  const [future, setFuture] = useState<any[]>([])
 
   useEffect(() => {
     if (!user) return
@@ -40,10 +42,33 @@ export function TreatmentPlansPage() {
     try {
       const plan = await api.createPlanFromTemplate(selectedAssignment, selectedTemplate)
       setCreatedPlan(plan)
+      setHistory([]); setFuture([])
       setEditing(true)
     } finally {
       setCreating(false)
     }
+  }
+
+  const pushHistory = (nextPlan: any) => {
+    setHistory((h) => [...h, createdPlan])
+    setFuture([])
+    setCreatedPlan(nextPlan)
+  }
+
+  const undo = () => {
+    if (!history.length) return
+    const prev = history[history.length - 1]
+    setHistory(history.slice(0, -1))
+    setFuture((f) => [createdPlan, ...f])
+    setCreatedPlan(prev)
+  }
+
+  const redo = () => {
+    if (!future.length) return
+    const next = future[0]
+    setFuture(future.slice(1))
+    setHistory((h) => [...h, createdPlan])
+    setCreatedPlan(next)
   }
 
   if (loading) return <div className="p-6">Loading...</div>
@@ -117,10 +142,10 @@ export function TreatmentPlansPage() {
                       <li key={i} className="list-none flex items-center space-x-2">
                         {editing ? (
                           <>
-                            <input className="border rounded px-2 py-1 w-56" value={ex.name} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].name = e.target.value; setCreatedPlan(next) }} />
-                            <input type="number" className="border rounded px-2 py-1 w-20" placeholder="sets" value={ex.sets || ''} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].sets = Number(e.target.value)||undefined; setCreatedPlan(next) }} />
-                            <input type="number" className="border rounded px-2 py-1 w-20" placeholder="reps" value={ex.reps || ''} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].reps = Number(e.target.value)||undefined; setCreatedPlan(next) }} />
-                            <input className="border rounded px-2 py-1 flex-1" placeholder="video url" value={ex.video_url || ''} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].video_url = e.target.value; setCreatedPlan(next) }} />
+                            <input className="border rounded px-2 py-1 w-56" value={ex.name} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].name = e.target.value; pushHistory(next) }} />
+                            <input type="number" className="border rounded px-2 py-1 w-20" placeholder="sets" value={ex.sets || ''} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].sets = Number(e.target.value)||undefined; pushHistory(next) }} />
+                            <input type="number" className="border rounded px-2 py-1 w-20" placeholder="reps" value={ex.reps || ''} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].reps = Number(e.target.value)||undefined; pushHistory(next) }} />
+                            <input className="border rounded px-2 py-1 flex-1" placeholder="video url" value={ex.video_url || ''} onChange={(e) => { const next = { ...createdPlan }; next.phases[idx].exercises[i].video_url = e.target.value; pushHistory(next) }} />
                           </>
                         ) : (
                           <>
@@ -133,7 +158,7 @@ export function TreatmentPlansPage() {
                   </ul>
                   {editing && (
                     <div className="mt-2">
-                      <MediaLibrary onSelect={(m) => { const next = { ...createdPlan }; next.phases[idx].exercises.push({ name: m.name, video_url: m.video_url }); setCreatedPlan(next) }} />
+                      <MediaLibrary onSelect={(m) => { const next = { ...createdPlan }; next.phases[idx].exercises.push({ name: m.name, video_url: m.video_url }); pushHistory(next) }} />
                     </div>
                   )}
                 </div>
@@ -144,6 +169,8 @@ export function TreatmentPlansPage() {
                 <button className="px-3 py-2 border rounded" onClick={() => setEditing(true)}>Edit</button>
               ) : (
                 <>
+                  <button className="px-3 py-2 border rounded" onClick={undo} disabled={!history.length}>Undo</button>
+                  <button className="px-3 py-2 border rounded" onClick={redo} disabled={!future.length}>Redo</button>
                   <button className="px-3 py-2 border rounded" onClick={() => setEditing(false)}>Cancel</button>
                   <button className="px-3 py-2 bg-green-600 text-white rounded" onClick={async () => { const saved = await api.updateTreatmentPlan(createdPlan.id, { phases: createdPlan.phases, title: createdPlan.title }); setCreatedPlan(saved); setEditing(false) }}>Save Changes</button>
                 </>

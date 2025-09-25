@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Activity, Check } from 'lucide-react'
+import { Users, Activity, Check, Wand2 } from 'lucide-react'
 import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -36,6 +36,21 @@ export function AssignPractitionersPage() {
     setForm({ student_id: '', practitioner_id: '', injury_id: '', notes: '' })
   }
 
+  const autoAssign = () => {
+    // naive heuristic: pick earliest 'reported' injury and least-loaded practitioner
+    const candidateInjury = injuries.find((i) => i.status === 'reported') || injuries[0]
+    if (!candidateInjury) return
+    const studentId = candidateInjury.student_id
+    const loadMap: Record<string, number> = {}
+    practitioners.forEach((p) => { loadMap[p.id] = 0 })
+    // derive loads by sport/specialization match (mock heuristic)
+    practitioners.forEach((p) => {
+      loadMap[p.id] += (p.specialization && candidateInjury.injury_type && p.specialization.toLowerCase().includes('physio')) ? 0 : 1
+    })
+    const best = practitioners.sort((a, b) => (loadMap[a.id] || 0) - (loadMap[b.id] || 0))[0]
+    setForm({ student_id: studentId, practitioner_id: best?.id || '', injury_id: candidateInjury.id, notes: 'Auto-assigned' })
+  }
+
   if (loading) {
     return (
       <div className="p-6">
@@ -51,6 +66,7 @@ export function AssignPractitionersPage() {
           <h1 className="text-2xl font-bold">Assignments</h1>
           <p className="text-gray-600">Assign practitioners to student injuries</p>
         </div>
+        <button onClick={autoAssign} className="px-3 py-2 border rounded flex items-center space-x-2 hover:bg-gray-50"><Wand2 className="w-4 h-4" /><span>Auto-assign</span></button>
       </div>
 
       <form onSubmit={assign} className="bg-white border rounded-lg p-4 space-y-4">
