@@ -327,8 +327,13 @@ function App() {
         />
 
         {/* Default redirect */}
+ cursor/fix-login-redirect-and-logout-page-9b99
+        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+        <Route path="*" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+
         <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
         <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
+ main
       </Routes>
     </Router>
   )
