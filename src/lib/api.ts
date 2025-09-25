@@ -46,7 +46,18 @@ export const api = {
     if (role === 'practitioner') query = query.eq('practitioner_id', userId)
     const { data, error } = await query
     if (error) throw error
-    return data
+    const ids = new Set<string>()
+    data?.forEach((row: any) => {
+      if (row.student_id) ids.add(row.student_id)
+      if (row.practitioner_id) ids.add(row.practitioner_id)
+    })
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name, email').in('id', Array.from(ids))
+    const map = new Map((profiles || []).map((p: any) => [p.id, p]))
+    return (data || []).map((row: any) => ({
+      ...row,
+      student_profile: map.get(row.student_id) || null,
+      practitioner_profile: map.get(row.practitioner_id) || null,
+    }))
   },
 
   async getMessages(userId: string) {
@@ -57,7 +68,15 @@ export const api = {
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
       .order('sent_at', { ascending: false })
     if (error) throw error
-    return data
+    const ids = new Set<string>()
+    data?.forEach((m: any) => { ids.add(m.sender_id); ids.add(m.receiver_id) })
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name, role').in('id', Array.from(ids))
+    const map = new Map((profiles || []).map((p: any) => [p.id, p]))
+    return (data || []).map((m: any) => ({
+      ...m,
+      sender_profile: map.get(m.sender_id) || null,
+      receiver_profile: map.get(m.receiver_id) || null,
+    }))
   },
 
   async getUsers(role?: string) {
@@ -135,6 +154,50 @@ export const api = {
     return () => {
       supabase.removeChannel(channel)
     }
+  },
+  async getAssignments(practitionerId?: string, studentId?: string) {
+    if (!isSupabaseEnabled || !supabase) return mockAPI.getAssignments(practitionerId, studentId)
+    let query = supabase.from('practitioner_assignments').select('*')
+    if (practitionerId) query = query.eq('practitioner_id', practitionerId)
+    if (studentId) query = query.eq('student_id', studentId)
+    const { data, error } = await query
+    if (error) throw error
+    const ids = new Set<string>()
+    data?.forEach((a: any) => { ids.add(a.student_id); ids.add(a.practitioner_id) })
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name, email').in('id', Array.from(ids))
+    const map = new Map((profiles || []).map((p: any) => [p.id, p]))
+    return (data || []).map((a: any) => ({
+      ...a,
+      student_profile: map.get(a.student_id) || null,
+      practitioner_profile: map.get(a.practitioner_id) || null,
+    }))
+  },
+  async getRecoveryLogs(filters?: { practitioner_id?: string; assignment_id?: string }) {
+    if (!isSupabaseEnabled || !supabase) return mockAPI.getRecoveryLogs(filters?.practitioner_id)
+    let query = supabase.from('recovery_logs').select('*').order('date_logged', { ascending: false })
+    if (filters?.practitioner_id) query = query.eq('practitioner_id', filters.practitioner_id)
+    if (filters?.assignment_id) query = query.eq('assignment_id', filters.assignment_id)
+    const { data, error } = await query
+    if (error) throw error
+    const assignmentIds = Array.from(new Set((data || []).map((l: any) => l.assignment_id)))
+    const practitionerIds = Array.from(new Set((data || []).map((l: any) => l.practitioner_id)))
+    const [{ data: assignments }, { data: practitioners }] = await Promise.all([
+      supabase.from('practitioner_assignments').select('*').in('id', assignmentIds),
+      supabase.from('profiles').select('id, full_name').in('id', practitionerIds),
+    ])
+    const assignmentMap = new Map((assignments || []).map((a: any) => [a.id, a]))
+    const practitionerMap = new Map((practitioners || []).map((p: any) => [p.id, p]))
+    const studentIds = Array.from(new Set((assignments || []).map((a: any) => a.student_id)))
+    const { data: students } = await supabase.from('profiles').select('id, full_name').in('id', studentIds)
+    const studentMap = new Map((students || []).map((s: any) => [s.id, s]))
+    return (data || []).map((l: any) => ({
+      ...l,
+      practitioner_profile: practitionerMap.get(l.practitioner_id) || null,
+      assignment: assignmentMap.get(l.assignment_id) || null,
+      assignment_student_profile: assignmentMap.get(l.assignment_id)
+        ? studentMap.get(assignmentMap.get(l.assignment_id).student_id)
+        : null,
+    }))
   },
   async getFiles(uploadedBy?: string) {
     if (!isSupabaseEnabled || !supabase) throw new Error('Supabase required')

@@ -31,6 +31,9 @@ export function FilesPage() {
       await api.linkFileRow({ uploaded_by: user.id, file_url: storagePath, file_type: selected.type || 'application/octet-stream' })
       setSelected(null)
       await load()
+      // @ts-ignore
+      const { pushToast } = await import('../../components/Toaster')
+      pushToast({ type: 'success', message: 'File uploaded' })
     } finally {
       setUploading(false)
     }

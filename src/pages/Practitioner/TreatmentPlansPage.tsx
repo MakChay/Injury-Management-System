@@ -37,7 +37,7 @@ export function TreatmentPlansPage() {
             <div key={a.id} className="p-4 flex items-center justify-between">
               <div>
                 <div className="font-medium">Assignment {a.id.slice(0,8)}</div>
-                <div className="text-sm text-gray-500">Student: {a.student_id.slice(0,8)}</div>
+                <div className="text-sm text-gray-500">Student: {a.student_profile?.full_name || a.student_id.slice(0,8)}</div>
               </div>
               <a className="text-sm text-blue-600 flex items-center space-x-1" href="/recovery-logs">
                 <NotebookPen className="w-4 h-4" />

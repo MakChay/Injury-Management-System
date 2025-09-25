@@ -28,10 +28,11 @@ export function AdminDashboard() {
       setLoading(true)
       
       // Fetch user statistics
-      const students = await api.getUsers('student')
-      const practitioners = await api.getUsers('practitioner')
-      const injuries = await api.getInjuries()
-      await api.getAssignments()
+      const [students, practitioners, injuries] = await Promise.all([
+        api.getUsers('student'),
+        api.getUsers('practitioner'),
+        api.getInjuries(),
+      ])
       const appointments = await api.getAppointments('', 'admin' as any)
 
       const activeInjuries = injuries.filter(i => 
@@ -52,24 +53,25 @@ export function AdminDashboard() {
       })
 
       // Process injury trends by month
-      const monthlyData = (injuries as any[]).reduce((acc: any, injury: any) => {
-        const month = new Date(injury.date_reported).toLocaleString('default', { month: 'short' })
-        acc[month] = (acc[month] || 0) + 1
-        return acc
-      }, {})
+      const monthlyData: Record<string, number> = {}
+      ;(injuries as any[]).forEach((injury: any) => {
+        const d = new Date(injury.date_reported)
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+        monthlyData[key] = (monthlyData[key] || 0) + 1
+      })
 
-      const trendsData = Object.entries(monthlyData).map(([month, count]) => ({
-        month,
-        injuries: count
-      }))
+      const trendsData = Object.entries(monthlyData)
+        .sort(([a],[b]) => a.localeCompare(b))
+        .map(([month, count]) => ({ month, injuries: count }))
 
       setInjuryTrends(trendsData)
 
       // Process severity distribution
-      const severityCount = (injuries as any[]).reduce((acc: any, injury: any) => {
-        acc[injury.severity as string] = (acc[injury.severity as string] || 0) + 1
-        return acc
-      }, {})
+      const severityCount: Record<string, number> = {}
+      ;(injuries as any[]).forEach((injury: any) => {
+        const key = injury.severity as string
+        severityCount[key] = (severityCount[key] || 0) + 1
+      })
 
       const severityColors = {
         mild: '#fbbf24',

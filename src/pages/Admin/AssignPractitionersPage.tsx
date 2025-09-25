@@ -107,7 +107,7 @@ export function AssignPractitionersPage() {
         <div className="bg-white border rounded-lg">
           <div className="p-4 border-b flex items-center space-x-2"><Activity className="w-5 h-5 text-purple-600" /><h2 className="font-semibold">Recent Injuries</h2></div>
           <div className="divide-y">
-            {injuries.slice(0, 8).map((i) => (
+              {injuries.slice(0, 8).map((i) => (
               <div key={i.id} className="p-4">{i.injury_type} • {i.severity} • {new Date(i.date_reported).toLocaleDateString()}</div>
             ))}
           </div>

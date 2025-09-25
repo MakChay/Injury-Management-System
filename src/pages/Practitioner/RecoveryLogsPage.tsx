@@ -40,17 +40,26 @@ export function RecoveryLogsPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !isPractitioner) return
-    await api.addRecoveryLog({
-      assignment_id: form.assignment_id,
-      practitioner_id: user.id,
-      progress_notes: form.progress_notes,
-      exercises: form.exercises || null,
-      pain_level: form.pain_level,
-      mobility_score: form.mobility_score,
-      next_session_plan: form.next_session_plan || null,
-    })
-    setShowForm(false)
-    await load()
+    try {
+      await api.addRecoveryLog({
+        assignment_id: form.assignment_id,
+        practitioner_id: user.id,
+        progress_notes: form.progress_notes,
+        exercises: form.exercises || null,
+        pain_level: form.pain_level,
+        mobility_score: form.mobility_score,
+        next_session_plan: form.next_session_plan || null,
+      })
+      // @ts-ignore
+      const { pushToast } = await import('../../components/Toaster')
+      pushToast({ type: 'success', message: 'Recovery log added' })
+      setShowForm(false)
+      await load()
+    } catch (e) {
+      // @ts-ignore
+      const { pushToast } = await import('../../components/Toaster')
+      pushToast({ type: 'error', message: 'Failed to add recovery log' })
+    }
   }
 
   return (
@@ -78,7 +87,7 @@ export function RecoveryLogsPage() {
             >
               <option value="">Select assignment</option>
               {assignments.map((a) => (
-                <option key={a.id} value={a.id}>{a.id.slice(0,8)} • Student {a.student_id.slice(0,8)}</option>
+                <option key={a.id} value={a.id}>{a.id.slice(0,8)} • {a.student_profile?.full_name || a.student_id.slice(0,8)}</option>
               ))}
             </select>
           </div>
