@@ -29,6 +29,7 @@ import { RTPChecklistPage } from './pages/Student/RTPChecklistPage'
 import { LearningHubPage } from './pages/Student/LearningHubPage'
 import { useReminders } from './hooks/useReminders'
 import { AnalyticsPage } from './pages/Admin/AnalyticsPage'
+import { SystemStatusPage } from './pages/Admin/SystemStatusPage'
 
 function App() {
   const { user, loading } = useAuth()
@@ -243,6 +244,16 @@ function App() {
             <ProtectedRoute requiredRole="admin">
               <Layout>
                 <AssignPractitionersPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/system-status"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout>
+                <SystemStatusPage />
               </Layout>
             </ProtectedRoute>
           }

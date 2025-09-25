@@ -33,6 +33,16 @@ Supabase setup
 3. Auth email branding: Supabase Dashboard → Authentication → Email templates. Set logo/colors and customize Confirmation and Reset Password templates. Ensure Site URL points to your app domain and routes `/verify-email` and `/reset-password` exist.
 
 SMS reminders (optional)
+Testing (Playwright)
+1. Install Playwright (one-time):
+```
+npx playwright install
+```
+2. Run E2E smoke tests:
+```
+npm run test:e2e
+```
+
 - Use a Supabase Edge Function (e.g., `send-sms`) with Twilio to send SMS. Store `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` as secrets.
 - Extend `notification_preferences` to enable SMS per user and read phone numbers from `profiles`.
 - Trigger via cron (every 5–10 min) to notify upcoming appointments for opted-in users.

@@ -55,6 +55,7 @@ export function Sidebar() {
         { to: '/manage-users', icon: Users, label: 'Manage Users' },
         { to: '/assign-practitioners', icon: Users, label: 'Assignments' },
         { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+        { to: '/system-status', icon: Settings, label: 'System Status' },
         { to: '/all-injuries', icon: Activity, label: 'All Injuries' },
       ]
     }
