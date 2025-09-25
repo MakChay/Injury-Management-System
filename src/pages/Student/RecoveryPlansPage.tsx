@@ -1,100 +1,246 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Stethoscope, PlayCircle } from 'lucide-react'
+import { Activity, Calendar, CheckCircle, Clock, Play } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { api } from '../../lib/api'
 
+interface RecoveryPlan {
+  id: string
+  title: string
+  phases: Array<{
+    title: string
+    completed: boolean
+    exercises: Array<{
+      name: string
+      done: boolean
+      notes?: string
+    }>
+  }>
+  created_at: string
+}
+
 export function RecoveryPlansPage() {
   const { user } = useAuth()
-  const [logs, setLogs] = useState<any[]>([])
-  const [plans, setPlans] = useState<any[]>([])
+  const [plans, setPlans] = useState<RecoveryPlan[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!user) return
-    load()
+    if (user) {
+      fetchPlans()
+    }
   }, [user])
 
-  const load = async () => {
+  const fetchPlans = async () => {
     if (!user) return
-    setLoading(true)
-    // find assignments where current user is a student, then get logs
-    const assignments = await api.getAssignments(undefined, user.id)
-    const allLogs: any[] = []
-    for (const a of assignments) {
-      const logs = await api.getRecoveryLogs({ assignment_id: a.id })
-      allLogs.push(...logs)
+
+    try {
+      setLoading(true)
+      // Mock data for now - in real app, fetch from API
+      const mockPlans: RecoveryPlan[] = [
+        {
+          id: 'plan-1',
+          title: 'Ankle Sprain Recovery Plan',
+          phases: [
+            {
+              title: 'Phase 1: Acute Recovery (Days 1-3)',
+              completed: true,
+              exercises: [
+                { name: 'Rest, Ice, Compression, Elevation', done: true },
+                { name: 'Ankle Alphabet Exercises', done: true },
+                { name: 'Gentle Range of Motion', done: false },
+              ]
+            },
+            {
+              title: 'Phase 2: Subacute Recovery (Days 4-10)',
+              completed: false,
+              exercises: [
+                { name: 'Calf Raises (3x15)', done: false },
+                { name: 'Single-leg Balance (2x30s)', done: false },
+                { name: 'Ankle Circles (3x10 each direction)', done: false },
+              ]
+            },
+            {
+              title: 'Phase 3: Return to Activity (Days 11-21)',
+              completed: false,
+              exercises: [
+                { name: 'Lunges (3x10 each leg)', done: false },
+                { name: 'Jump Rope (5 minutes)', done: false },
+                { name: 'Sport-specific Drills', done: false },
+              ]
+            }
+          ],
+          created_at: '2024-01-20T10:00:00Z'
+        }
+      ]
+      setPlans(mockPlans)
+    } catch (error) {
+      console.error('Error fetching recovery plans:', error)
+    } finally {
+      setLoading(false)
     }
-    setLogs(allLogs.sort((a, b) => new Date(b.date_logged).getTime() - new Date(a.date_logged).getTime()))
-    const pl = await api.getStudentTreatmentPlans(user.id)
-    setPlans(pl)
-    setLoading(false)
   }
 
-  if (loading) return <div className="p-6">Loading...</div>
+  const toggleExercise = (planId: string, phaseIndex: number, exerciseIndex: number) => {
+    setPlans(prev => prev.map(plan => {
+      if (plan.id === planId) {
+        const updatedPhases = [...plan.phases]
+        updatedPhases[phaseIndex] = {
+          ...updatedPhases[phaseIndex],
+          exercises: updatedPhases[phaseIndex].exercises.map((exercise, idx) => 
+            idx === exerciseIndex ? { ...exercise, done: !exercise.done } : exercise
+          )
+        }
+        return { ...plan, phases: updatedPhases }
+      }
+      return plan
+    }))
+  }
+
+  const getPhaseProgress = (phase: RecoveryPlan['phases'][0]) => {
+    const completed = phase.exercises.filter(ex => ex.done).length
+    return (completed / phase.exercises.length) * 100
+  }
+
+  const getOverallProgress = (plan: RecoveryPlan) => {
+    const totalExercises = plan.phases.reduce((acc, phase) => acc + phase.exercises.length, 0)
+    const completedExercises = plan.phases.reduce((acc, phase) => 
+      acc + phase.exercises.filter(ex => ex.done).length, 0
+    )
+    return (completedExercises / totalExercises) * 100
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center space-x-2">
-        <Stethoscope className="w-6 h-6 text-green-600" />
-        <h1 className="text-2xl font-bold">Recovery Plans</h1>
-      </div>
-      {/* Treatment Plans */}
-      <div className="bg-white border rounded-lg">
-        <div className="p-4 border-b font-semibold">My Treatment Plans</div>
-        <div className="divide-y">
-          {plans.map((p) => (
-            <div key={p.id} className="p-4">
-              <div className="font-medium">{p.title}</div>
-              {Array.isArray(p.phases) && (
-                <div className="mt-2 space-y-2">
-                  {p.phases.map((ph: any, idx: number) => (
-                    <div key={idx} className="border rounded p-3">
-                      <div className="font-medium">{ph.title}</div>
-                      <ul className="list-disc ml-5 text-sm text-gray-700">
-                        {(ph.exercises || []).map((ex: any, i: number) => (
-                          <li key={i} className="space-y-1">
-                            <div className="flex items-center space-x-2">
-                              {ex.video_url && (
-                                <a className="text-blue-600 flex items-center space-x-1" href={ex.video_url} target="_blank" rel="noreferrer">
-                                  <PlayCircle className="w-4 h-4" />
-                                  <span>Video</span>
-                                </a>
-                              )}
-                              <span>{ex.name}{ex.sets ? ` • ${ex.sets}x${ex.reps || ''}` : ''}</span>
-                            </div>
-                            {ex.video_url && (
-                              <video controls className="w-full max-w-md rounded border">
-                                <source src={ex.video_url} />
-                              </video>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+    <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center space-x-3"
+      >
+        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+          <Activity className="w-6 h-6 text-green-600" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Recovery Plans</h1>
+          <p className="text-gray-600">Follow your personalized recovery program</p>
+        </div>
+      </motion.div>
+
+      {plans.length > 0 ? (
+        <div className="space-y-6">
+          {plans.map((plan, planIndex) => (
+            <motion.div
+              key={plan.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: planIndex * 0.1 }}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">{plan.title}</h2>
+                  <p className="text-sm text-gray-600">
+                    Created: {new Date(plan.created_at).toLocaleDateString()}
+                  </p>
                 </div>
-              )}
-            </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {Math.round(getOverallProgress(plan))}%
+                  </div>
+                  <div className="text-sm text-gray-500">Complete</div>
+                </div>
+              </div>
+
+              {/* Overall Progress Bar */}
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
+                <motion.div
+                  className="bg-blue-600 h-2 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${getOverallProgress(plan)}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
+
+              {/* Phases */}
+              <div className="space-y-4">
+                {plan.phases.map((phase, phaseIndex) => {
+                  const phaseProgress = getPhaseProgress(phase)
+                  
+                  return (
+                    <div key={phaseIndex} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-medium text-gray-900">{phase.title}</h3>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-gray-500">
+                            {Math.round(phaseProgress)}%
+                          </span>
+                          {phase.completed && (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="w-full bg-gray-200 rounded-full h-1 mb-3">
+                        <motion.div
+                          className="bg-green-500 h-1 rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${phaseProgress}%` }}
+                          transition={{ duration: 0.5 }}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        {phase.exercises.map((exercise, exerciseIndex) => (
+                          <div
+                            key={exerciseIndex}
+                            className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50"
+                          >
+                            <button
+                              onClick={() => toggleExercise(plan.id, phaseIndex, exerciseIndex)}
+                              className="flex-shrink-0"
+                            >
+                              {exercise.done ? (
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                              ) : (
+                                <div className="w-5 h-5 border-2 border-gray-300 rounded-full" />
+                              )}
+                            </button>
+                            <span className={`flex-1 ${exercise.done ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                              {exercise.name}
+                            </span>
+                            {exercise.done && (
+                              <Clock className="w-4 h-4 text-green-600" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </motion.div>
           ))}
-          {plans.length === 0 && <div className="p-6 text-center text-gray-500">No treatment plans yet.</div>}
         </div>
-      </div>
-      <div className="bg-white border rounded-lg">
-        <div className="p-4 border-b font-semibold">Practitioner Notes & Exercises</div>
-        <div className="divide-y">
-          {logs.map((log) => (
-            <div key={log.id} className="p-4">
-              <div className="text-sm text-gray-500">{new Date(log.date_logged).toLocaleString()}</div>
-              <div className="font-medium mt-1">{log.progress_notes}</div>
-              {log.exercises && <div className="text-sm text-gray-700 mt-1">Exercises: {log.exercises}</div>}
-              {log.next_session_plan && <div className="text-sm text-gray-700 mt-1">Next: {log.next_session_plan}</div>}
-            </div>
-          ))}
-          {logs.length === 0 && <div className="p-6 text-center text-gray-500">No recovery plans yet.</div>}
-        </div>
-      </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200"
+        >
+          <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Recovery Plans</h3>
+          <p className="text-gray-600 mb-4">
+            You don't have any active recovery plans yet. Your practitioner will create one for you after your injury assessment.
+          </p>
+        </motion.div>
+      )}
     </div>
   )
 }
-

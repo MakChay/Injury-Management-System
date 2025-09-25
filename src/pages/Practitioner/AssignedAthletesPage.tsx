@@ -1,98 +1,86 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Search, Filter, Calendar, MessageSquare, Activity } from 'lucide-react'
+import { Users, Search, Filter, Eye, MessageSquare, Calendar } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { api } from '../../lib/api'
+import { type Assignment, type User, type Injury } from '../../lib/mockData'
 
-interface AssignmentWithDetails {
-  id: string
-  student_id: string
-  practitioner_id: string
-  injury_id: string
-  assigned_at: string
-  active: boolean
-  notes?: string
-  student?: any
-  injury?: any
+interface AthleteWithDetails extends User {
+  assignments: Assignment[]
+  latestInjury?: Injury
 }
 
 export function AssignedAthletesPage() {
   const { user } = useAuth()
-  const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([])
-  const [filteredAssignments, setFilteredAssignments] = useState<AssignmentWithDetails[]>([])
+  const [athletes, setAthletes] = useState<AthleteWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [selectedAthlete, setSelectedAthlete] = useState<AssignmentWithDetails | null>(null)
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all')
 
   useEffect(() => {
     if (user) {
-      fetchAssignments()
+      fetchAssignedAthletes()
     }
   }, [user])
 
-  useEffect(() => {
-    filterAssignments()
-  }, [assignments, searchTerm, statusFilter])
-
-  const fetchAssignments = async () => {
+  const fetchAssignedAthletes = async () => {
     if (!user) return
 
     try {
       setLoading(true)
-      const data = await api.getAssignments(user.id)
-      const injuryIds = Array.from(new Set(data.map((a: any) => a.injury_id)))
-      const injuries = await api.getInjuriesByIds(injuryIds)
-      const injuryMap = new Map((injuries as any[]).map((i: any) => [i.id, i]))
-      const enrichedAssignments: AssignmentWithDetails[] = data.map((assignment: any) => ({
-        ...assignment,
-        student: assignment.student_profile,
-        injury: injuryMap.get(assignment.injury_id) || undefined,
-      }))
-      setAssignments(enrichedAssignments)
+      const assignments = await api.getAssignments(user.id)
+      
+      // Get unique athletes from assignments
+      const athleteIds = [...new Set(assignments.map(a => a.student_id))]
+      const athleteDetails = await Promise.all(
+        athleteIds.map(async (athleteId) => {
+          const athlete = await api.getUsers().then(users => 
+            users.find(u => u.id === athleteId)
+          )
+          const athleteAssignments = assignments.filter(a => a.student_id === athleteId)
+          const injuries = await api.getInjuries(athleteId)
+          const latestInjury = injuries.sort((a, b) => 
+            new Date(b.date_reported).getTime() - new Date(a.date_reported).getTime()
+          )[0]
+          
+          return {
+            ...athlete!,
+            assignments: athleteAssignments,
+            latestInjury
+          }
+        })
+      )
+      
+      setAthletes(athleteDetails)
     } catch (error) {
-      console.error('Error fetching assignments:', error)
+      console.error('Error fetching assigned athletes:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const filterAssignments = () => {
-    let filtered = assignments
-
-    if (searchTerm) {
-      filtered = filtered.filter(assignment =>
-        assignment.student?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (assignment.injury?.injury_type || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (assignment.injury?.body_part || '').toLowerCase().includes(searchTerm.toLowerCase())
-      )
+  const filteredAthletes = athletes.filter(athlete => {
+    const matchesSearch = athlete.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         athlete.email.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    if (filterStatus === 'active') {
+      return matchesSearch && athlete.assignments.some(a => a.active)
     }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(assignment => (assignment.injury?.status || '') === statusFilter)
+    if (filterStatus === 'completed') {
+      return matchesSearch && athlete.assignments.every(a => !a.active)
     }
+    
+    return matchesSearch
+  })
 
-    setFilteredAssignments(filtered)
-  }
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'mild': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'moderate': return 'bg-orange-100 text-orange-800 border-orange-200'
-      case 'severe': return 'bg-red-100 text-red-800 border-red-200'
-      case 'critical': return 'bg-red-200 text-red-900 border-red-300'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
-    }
-  }
-
-  const getStatusColor = (status: string) => {
+  const getInjuryStatusColor = (status: string) => {
     switch (status) {
-      case 'reported': return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'assigned': return 'bg-purple-100 text-purple-800 border-purple-200'
-      case 'in_treatment': return 'bg-indigo-100 text-indigo-800 border-indigo-200'
-      case 'recovering': return 'bg-green-100 text-green-800 border-green-200'
-      case 'resolved': return 'bg-gray-100 text-gray-800 border-gray-200'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+      case 'reported': return 'bg-blue-100 text-blue-800'
+      case 'assigned': return 'bg-purple-100 text-purple-800'
+      case 'in_treatment': return 'bg-indigo-100 text-indigo-800'
+      case 'recovering': return 'bg-green-100 text-green-800'
+      case 'resolved': return 'bg-gray-100 text-gray-800'
+      default: return 'bg-gray-100 text-gray-800'
     }
   }
 
@@ -105,205 +93,148 @@ export function AssignedAthletesPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="space-y-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="flex items-center space-x-3"
       >
-        <h1 className="text-3xl font-bold text-gray-900">Assigned Athletes</h1>
-        <p className="text-gray-600 mt-2">
-          Manage your assigned athletes and track their recovery progress
-        </p>
+        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+          <Users className="w-6 h-6 text-blue-600" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Assigned Athletes</h1>
+          <p className="text-gray-600">Manage your assigned student-athletes and their recovery</p>
+        </div>
       </motion.div>
 
-      {/* Search and Filters */}
+      {/* Search and Filter */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6"
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
       >
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search athletes, injuries, or body parts..."
+              placeholder="Search athletes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Filter className="w-5 h-5 text-gray-400" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="all">All Status</option>
-                <option value="assigned">Assigned</option>
-                <option value="in_treatment">In Treatment</option>
-                <option value="recovering">Recovering</option>
-                <option value="resolved">Resolved</option>
-              </select>
-            </div>
+          <div className="flex items-center space-x-2">
+            <Filter className="w-5 h-5 text-gray-400" />
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as any)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Athletes</option>
+              <option value="active">Active Cases</option>
+              <option value="completed">Completed Cases</option>
+            </select>
           </div>
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Athletes List */}
-        <div className="lg:col-span-2">
+      {/* Athletes List */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredAthletes.map((athlete, index) => (
           <motion.div
+            key={athlete.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white rounded-lg shadow-sm border border-gray-200"
+            transition={{ delay: index * 0.1 }}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
           >
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Athletes ({filteredAssignments.length})
-              </h2>
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <span className="text-lg font-semibold text-gray-600">
+                    {athlete.full_name.split(' ').map(n => n[0]).join('')}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">{athlete.full_name}</h3>
+                  <p className="text-sm text-gray-600">{athlete.email}</p>
+                </div>
+              </div>
+              <div className="flex space-x-1">
+                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                  <Eye className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <div className="p-6">
-              {filteredAssignments.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredAssignments.map((assignment) => (
-                    <motion.div
-                      key={assignment.id}
-                      whileHover={{ scale: 1.01 }}
-                      onClick={() => setSelectedAthlete(assignment)}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedAthlete?.id === assignment.id
-                          ? 'border-blue-300 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-4">
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <Users className="w-6 h-6 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium text-gray-900">{assignment.student?.full_name}</h3>
-                            <div className="flex items-center space-x-2 mt-2">
-                              <span className="text-sm font-medium text-gray-700">{assignment.injury?.injury_type}</span>
-                              <span className="text-sm text-gray-500">•</span>
-                              <span className="text-sm text-gray-500">{assignment.injury?.body_part}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end space-y-2">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getSeverityColor(assignment.injury?.severity || 'mild')}`}>
-                            {assignment.injury?.severity}
-                          </span>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(assignment.injury?.status || 'assigned')}`}>
-                            {(assignment.injury?.status || 'assigned').replace('_', ' ')}
-                          </span>
-                          <p className="text-xs text-gray-500">
-                            Assigned: {new Date(assignment.assigned_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+
+            {athlete.latestInjury && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-gray-900">Latest Injury</h4>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getInjuryStatusColor(athlete.latestInjury.status)}`}>
+                    {athlete.latestInjury.status.replace('_', ' ')}
+                  </span>
                 </div>
-              ) : (
-                <div className="text-center py-12">
-                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No athletes found</h3>
-                  <p className="text-gray-600">
-                    {searchTerm || statusFilter !== 'all' 
-                      ? 'Try adjusting your search or filters'
-                      : 'No athletes have been assigned to you yet'
-                    }
-                  </p>
-                </div>
-              )}
+                <p className="text-sm text-gray-600 mb-1">{athlete.latestInjury.injury_type}</p>
+                <p className="text-xs text-gray-500">
+                  {athlete.latestInjury.body_part} • {new Date(athlete.latestInjury.date_occurred).toLocaleDateString()}
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Active Assignments</span>
+                <span className="font-medium text-gray-900">
+                  {athlete.assignments.filter(a => a.active).length}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Total Cases</span>
+                <span className="font-medium text-gray-900">
+                  {athlete.assignments.length}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="flex space-x-2">
+                <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                  View Details
+                </button>
+                <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                  Message
+                </button>
+              </div>
             </div>
           </motion.div>
-        </div>
-
-        {/* Athlete Details */}
-        <div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white rounded-lg shadow-sm border border-gray-200 sticky top-6"
-          >
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Athlete Details</h2>
-            </div>
-            <div className="p-6">
-              {selectedAthlete ? (
-                <div className="space-y-6">
-                  {/* Athlete Info */}
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Users className="w-8 h-8 text-blue-600" />
-                    </div>
-                    <h3 className="font-medium text-gray-900">{selectedAthlete.student?.full_name}</h3>
-                  </div>
-
-                  {/* Injury Details */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900">Current Injury</h4>
-                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Type:</span>
-                        <span className="text-sm font-medium">{selectedAthlete.injury?.injury_type}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Body Part:</span>
-                        <span className="text-sm font-medium">{selectedAthlete.injury?.body_part}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Severity:</span>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full border ${getSeverityColor(selectedAthlete.injury?.severity || 'mild')}`}>
-                          {selectedAthlete.injury?.severity}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Status:</span>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full border ${getStatusColor(selectedAthlete.injury?.status || 'assigned')}`}>
-                          {(selectedAthlete.injury?.status || 'assigned').replace('_', ' ')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="space-y-3">
-                    <a className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" href="/recovery-logs">
-                      <Activity className="w-4 h-4" />
-                      <span>Add Recovery Log</span>
-                    </a>
-                    <div className="grid grid-cols-2 gap-3">
-                      <a className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors" href="/appointments">
-                        <Calendar className="w-4 h-4" />
-                        <span className="text-sm">Schedule</span>
-                      </a>
-                      <a className="flex items-center justify-center space-x-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors" href="/messages">
-                        <MessageSquare className="w-4 h-4" />
-                        <span className="text-sm">Message</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Select an athlete to view details</p>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
+        ))}
       </div>
+
+      {filteredAthletes.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200"
+        >
+          <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {searchTerm || filterStatus !== 'all' ? 'No athletes found' : 'No assigned athletes'}
+          </h3>
+          <p className="text-gray-600">
+            {searchTerm || filterStatus !== 'all' 
+              ? 'Try adjusting your search or filter criteria.'
+              : 'You don\'t have any assigned athletes yet. Contact an administrator to get assigned to cases.'
+            }
+          </p>
+        </motion.div>
+      )}
     </div>
   )
 }
