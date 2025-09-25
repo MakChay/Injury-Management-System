@@ -298,6 +298,19 @@ create policy "templates update by creator or admin" on plan_templates
     created_by = auth.uid() or is_admin(auth.uid())
   );
 
+-- Seed default plan templates (idempotent)
+insert into plan_templates (id, name, injury_type, sport, phases, created_by)
+select gen_random_uuid(), 'Ankle Sprain (Moderate) - Generic', 'Ankle Sprain', null,
+       '[{"title":"Acute (Days 1-3)","exercises":[{"name":"Rest/Ice/Elevation"},{"name":"Ankle Alphabet"}]},{"title":"Subacute (Days 4-10)","exercises":[{"name":"Calf Raises","sets":3,"reps":15},{"name":"Single-leg Balance"}]}]'::jsonb,
+       null
+where not exists (select 1 from plan_templates where name = 'Ankle Sprain (Moderate) - Generic');
+
+insert into plan_templates (id, name, injury_type, sport, phases, created_by)
+select gen_random_uuid(), 'Hamstring Strain (Mild) - Running', 'Hamstring Strain', 'Athletics',
+       '[{"title":"Phase 1","exercises":[{"name":"Isometrics","sets":3,"reps":10}]},{"title":"Phase 2","exercises":[{"name":"Eccentric Nordic","sets":3,"reps":6}]}]'::jsonb,
+       null
+where not exists (select 1 from plan_templates where name = 'Hamstring Strain (Mild) - Running');
+
 -- Treatment plans bound to assignments
 create table if not exists treatment_plans (
   id uuid primary key default gen_random_uuid(),
