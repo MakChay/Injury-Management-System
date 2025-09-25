@@ -60,10 +60,7 @@ export function ReportInjuryPage() {
         date_occurred: formData.date_occurred,
         activity_when_injured: formData.activity_when_injured === 'Other' ? formData.custom_activity : formData.activity_when_injured,
         pain_level: formData.pain_level,
-        immediate_treatment: formData.immediate_treatment,
-        witnesses: formData.witnesses,
-        previous_injury: formData.previous_injury,
-        previous_injury_details: formData.previous_injury_details
+        // Additional fields can be stored in recovery logs or an extension table
       }
 
       await api.createInjury(injuryData)

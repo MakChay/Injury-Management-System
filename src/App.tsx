@@ -9,6 +9,11 @@ import { ReportInjuryPage } from './pages/Student/ReportInjuryPage'
 import { MyInjuriesPage } from './pages/Student/MyInjuriesPage'
 import { AssignedAthletesPage } from './pages/Practitioner/AssignedAthletesPage'
 import { ManageUsersPage } from './pages/Admin/ManageUsersPage'
+import { AppointmentsPage } from './pages/Shared/AppointmentsPage'
+import { MessagesPage } from './pages/Shared/MessagesPage'
+import { FilesPage } from './pages/Shared/FilesPage'
+import { RecoveryLogsPage } from './pages/Practitioner/RecoveryLogsPage'
+import { AssignPractitionersPage } from './pages/Admin/AssignPractitionersPage'
 
 function App() {
   const { user, loading } = useAuth()
@@ -92,10 +97,7 @@ function App() {
           element={
             <ProtectedRoute requiredRole="practitioner">
               <Layout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">Recovery Logs</h1>
-                  <p className="text-gray-600">Feature coming soon...</p>
-                </div>
+                <RecoveryLogsPage />
               </Layout>
             </ProtectedRoute>
           }
@@ -118,10 +120,7 @@ function App() {
           element={
             <ProtectedRoute requiredRole="admin">
               <Layout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">Assign Practitioners</h1>
-                  <p className="text-gray-600">Feature coming soon...</p>
-                </div>
+                <AssignPractitionersPage />
               </Layout>
             </ProtectedRoute>
           }
@@ -147,10 +146,7 @@ function App() {
           element={
             <ProtectedRoute>
               <Layout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">Appointments</h1>
-                  <p className="text-gray-600">Feature coming soon...</p>
-                </div>
+                <AppointmentsPage />
               </Layout>
             </ProtectedRoute>
           }
@@ -161,10 +157,7 @@ function App() {
           element={
             <ProtectedRoute>
               <Layout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">Messages</h1>
-                  <p className="text-gray-600">Feature coming soon...</p>
-                </div>
+                <MessagesPage />
               </Layout>
             </ProtectedRoute>
           }
@@ -175,10 +168,7 @@ function App() {
           element={
             <ProtectedRoute>
               <Layout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">Files</h1>
-                  <p className="text-gray-600">Feature coming soon...</p>
-                </div>
+                <FilesPage />
               </Layout>
             </ProtectedRoute>
           }

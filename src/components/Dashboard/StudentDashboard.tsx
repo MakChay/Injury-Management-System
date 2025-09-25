@@ -1,9 +1,8 @@
 import { motion } from 'framer-motion'
-import { Plus, Activity, Calendar, MessageSquare, AlertTriangle, TrendingUp } from 'lucide-react'
+import { Plus, Activity, Calendar, MessageSquare, AlertTriangle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { mockAPI, type Injury, type Appointment, type Message } from '../../lib/mockData'
-import { api } from '../../lib/api'
+import { mockAPI, type Injury } from '../../lib/mockData'
 import { useAuth } from '../../hooks/useAuth'
 
 export function StudentDashboard() {
@@ -30,19 +29,19 @@ export function StudentDashboard() {
       setLoading(true)
       
       // Fetch injuries
-      const injuries = await api.getInjuries(user.id)
+      const injuries = await mockAPI.getInjuries(user.id)
       const activeInjuries = injuries.filter(i => 
         ['reported', 'assigned', 'in_treatment', 'recovering'].includes(i.status)
       )
       
       // Fetch appointments
-      const appointments = await api.getAppointments(user.id, 'student')
+      const appointments = await mockAPI.getAppointments(user.id, 'student')
       const upcomingAppointments = appointments.filter(apt => 
         new Date(apt.appointment_date) > new Date() && apt.status === 'scheduled'
       )
       
       // Fetch messages
-      const messages = await api.getMessages(user.id)
+      const messages = await mockAPI.getMessages(user.id)
       const unreadMessages = messages.filter(msg => 
         msg.receiver_id === user.id && !msg.read
       )
