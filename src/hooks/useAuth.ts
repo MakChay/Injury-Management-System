@@ -210,5 +210,6 @@ export function useAuth() {
     isAdmin: profile?.role === 'admin',
     isPractitioner: profile?.role === 'practitioner',
     isStudent: profile?.role === 'student',
+    setProfile,
   }
 }

@@ -15,8 +15,9 @@ import { FilesPage } from './pages/Shared/FilesPage'
 import { RecoveryLogsPage } from './pages/Practitioner/RecoveryLogsPage'
 import { AssignPractitionersPage } from './pages/Admin/AssignPractitionersPage'
 import { LogoutPage } from './pages/Auth/LogoutPage'
-import { RecoveryPlansPage } from './pages/Student/RecoveryPlansPage'
+//
 import { TreatmentPlansPage } from './pages/Practitioner/TreatmentPlansPage'
+import { ProfilePage } from './pages/Settings/ProfilePage'
 
 function App() {
   const { user, loading } = useAuth()
@@ -184,7 +185,7 @@ function App() {
           element={
             <ProtectedRoute>
               <Layout>
-                <RecoveryPlansPage />
+                <ProfilePage />
               </Layout>
             </ProtectedRoute>
           }
