@@ -80,9 +80,9 @@ function App() {
             user ? (
               <Navigate to="/dashboard" replace />
             ) : (
-              <AuthLayout title="Create Account" subtitle="Join the DUT Athletic Injury Management system">
-                <RegisterForm />
-              </AuthLayout>
+            <AuthLayout title="Get Started" subtitle="Create your account to access DUT Athletic Injury Management">
+              <RegisterForm />
+            </AuthLayout>
             )
           } 
         />
@@ -333,11 +333,11 @@ function App() {
         {/* Default redirect */}
         <Route 
           path="/" 
-          element={<Navigate to={user ? "/dashboard" : "/login"} replace />} 
+          element={<Navigate to={user ? "/dashboard" : "/register"} replace />} 
         />
         <Route 
           path="*" 
-          element={<Navigate to={user ? "/dashboard" : "/login"} replace />} 
+          element={<Navigate to={user ? "/dashboard" : "/register"} replace />} 
         />
       </Routes>
     </Router>

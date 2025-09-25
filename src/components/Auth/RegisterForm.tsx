@@ -236,15 +236,18 @@ export function RegisterForm() {
         disabled={loading}
         className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {loading ? 'Creating Account...' : 'Create Account'}
+        {loading ? 'Creating Account...' : 'Get Started - Create Account'}
       </motion.button>
 
-      <div className="text-center">
+      <div className="text-center space-y-2">
+        <p className="text-xs text-gray-500">
+          By creating an account, you'll be able to report injuries, track recovery, and communicate with health practitioners.
+        </p>
         <Link
           to="/login"
           className="text-sm text-blue-600 hover:text-blue-500 font-medium"
         >
-          Already have an account? Sign in here
+          Already have an account? Sign in instead
         </Link>
       </div>
     </form>
