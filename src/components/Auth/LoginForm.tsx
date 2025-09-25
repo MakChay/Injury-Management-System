@@ -100,12 +100,19 @@ export function LoginForm() {
         {loading ? 'Signing In...' : 'Sign In'}
       </motion.button>
 
-      <div className="text-center">
+      <div className="text-center space-x-4">
         <Link
           to="/register"
           className="text-sm text-blue-600 hover:text-blue-500 font-medium"
         >
           Don't have an account? Create one here
+        </Link>
+        <span className="text-gray-300">|</span>
+        <Link
+          to="/forgot-password"
+          className="text-sm text-blue-600 hover:text-blue-500 font-medium"
+        >
+          Forgot password?
         </Link>
       </div>
     </form>

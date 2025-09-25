@@ -237,5 +237,17 @@ export const api = {
     if (error) throw error
     return data
   },
+
+  async getPlanTemplates() {
+    if (!isSupabaseEnabled || !supabase) return mockAPI.getPlanTemplates()
+    // Placeholder: expect a templates table in future
+    return mockAPI.getPlanTemplates()
+  },
+
+  async createPlanFromTemplate(assignment_id: string, template_id: string, title?: string) {
+    if (!isSupabaseEnabled || !supabase) return mockAPI.createPlanFromTemplate(assignment_id, template_id, title)
+    // Placeholder: insert into plans table
+    return mockAPI.createPlanFromTemplate(assignment_id, template_id, title)
+  },
 }
 

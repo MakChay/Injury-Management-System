@@ -15,12 +15,17 @@ import { FilesPage } from './pages/Shared/FilesPage'
 import { RecoveryLogsPage } from './pages/Practitioner/RecoveryLogsPage'
 import { AssignPractitionersPage } from './pages/Admin/AssignPractitionersPage'
 import { LogoutPage } from './pages/Auth/LogoutPage'
+import { ForgotPasswordPage } from './pages/Auth/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/Auth/ResetPasswordPage'
+import { VerifyEmailPage } from './pages/Auth/VerifyEmailPage'
 //
 import { TreatmentPlansPage } from './pages/Practitioner/TreatmentPlansPage'
 import { ProfilePage } from './pages/Settings/ProfilePage'
+import { useReminders } from './hooks/useReminders'
 
 function App() {
   const { user, loading } = useAuth()
+  useReminders()
 
   if (loading) {
     return (
@@ -76,6 +81,24 @@ function App() {
 
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="/signout" element={<Navigate to="/logout" replace />} />
+
+        {/* Password reset & verification */}
+        <Route
+          path="/forgot-password"
+          element={user ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />}
+        />
+        <Route
+          path="/reset-password"
+          element={<ResetPasswordPage />}
+        />
+        <Route
+          path="/verify-email"
+          element={<VerifyEmailPage />}
+        />
+        <Route
+          path="/auth/verify"
+          element={<Navigate to="/verify-email" replace />}
+        />
 
         {/* Protected routes */}
         <Route

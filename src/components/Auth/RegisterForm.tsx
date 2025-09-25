@@ -35,9 +35,11 @@ export function RegisterForm() {
     }
 
     try {
-      const { error } = await signUp(formData)
-      if (error) {
-        setError(error.message)
+      const result = await signUp(formData) as any
+      if (result?.error) {
+        setError(result.error.message)
+      } else if (result?.pendingVerification) {
+        navigate('/verify-email', { state: { email: formData.email } })
       } else {
         navigate('/dashboard')
       }

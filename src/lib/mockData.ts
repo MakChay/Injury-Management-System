@@ -78,6 +78,31 @@ export interface RecoveryLog {
   created_at: string
 }
 
+export interface TreatmentPlanTemplate {
+  id: string
+  name: string
+  injury_type: string
+  sport?: string
+  phases: Array<{
+    title: string
+    duration_days?: number
+    exercises: Array<{ name: string; sets?: number; reps?: number; notes?: string }>
+  }>
+}
+
+export interface TreatmentPlanInstance {
+  id: string
+  assignment_id: string
+  template_id?: string
+  title: string
+  phases: Array<{
+    title: string
+    completed?: boolean
+    exercises: Array<{ name: string; done?: boolean; notes?: string }>
+  }>
+  created_at: string
+}
+
 // Mock current user - change this to test different roles
 export const mockCurrentUser: User = {
   id: 'user-1',
@@ -316,5 +341,48 @@ export const mockAPI = {
   getUsers: async (role?: string) => {
     await new Promise(resolve => setTimeout(resolve, 500))
     return role ? mockUsers.filter(user => user.role === role) : mockUsers
-  }
+  },
+
+  // Templates and plans
+  getPlanTemplates: async () => {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const templates: TreatmentPlanTemplate[] = [
+      {
+        id: 'tpl-ankle-sprain',
+        name: 'Ankle Sprain (Moderate) - Generic',
+        injury_type: 'Ankle Sprain',
+        phases: [
+          { title: 'Acute (Days 1-3)', exercises: [{ name: 'Rest/Ice/Elevation' }, { name: 'Ankle Alphabet' }] },
+          { title: 'Subacute (Days 4-10)', exercises: [{ name: 'Calf Raises', sets: 3, reps: 15 }, { name: 'Single-leg Balance' }] },
+        ],
+      },
+      {
+        id: 'tpl-hamstring-mild',
+        name: 'Hamstring Strain (Mild) - Running',
+        injury_type: 'Hamstring Strain',
+        sport: 'Athletics',
+        phases: [
+          { title: 'Phase 1', exercises: [{ name: 'Isometrics', sets: 3, reps: 10 }] },
+          { title: 'Phase 2', exercises: [{ name: 'Eccentric Nordic', sets: 3, reps: 6 }] },
+        ],
+      },
+    ]
+    return templates
+  },
+
+  createPlanFromTemplate: async (assignment_id: string, template_id: string, title?: string) => {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    const plan: TreatmentPlanInstance = {
+      id: `plan-${Date.now()}`,
+      assignment_id,
+      template_id,
+      title: title || 'Personalized Plan',
+      phases: [
+        { title: 'Phase 1', exercises: [{ name: 'Exercise A' }, { name: 'Exercise B' }] },
+      ],
+      created_at: new Date().toISOString(),
+    }
+    return plan
+  },
+}
 }
