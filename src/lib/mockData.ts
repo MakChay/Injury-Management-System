@@ -7,6 +7,10 @@ export interface User {
   profile_pic?: string
   phone?: string
   student_number?: string
+  sport?: string
+  position?: string
+  dominant_side?: string
+  injury_history?: any
   specialization?: string
   bio?: string
   created_at: string
