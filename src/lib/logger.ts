@@ -3,8 +3,8 @@
  * Only logs in development mode or when explicitly enabled
  */
 
-const isDevelopment = process.env.NODE_ENV === 'development'
-const isLoggingEnabled = isDevelopment || process.env.VITE_ENABLE_LOGGING === 'true'
+const isDevelopment = import.meta.env.DEV
+const isLoggingEnabled = isDevelopment || import.meta.env.VITE_ENABLE_LOGGING === 'true'
 
 export const logger = {
   debug: (message: string, ...args: any[]) => {

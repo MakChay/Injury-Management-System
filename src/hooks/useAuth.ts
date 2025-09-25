@@ -11,7 +11,7 @@ export function useAuth() {
   // Development mode: Force no user to show register page first
   // Remove this in production or set via environment variable
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && process.env.VITE_FORCE_REGISTER_FIRST === 'true' && user) {
+    if (import.meta.env.DEV && import.meta.env.VITE_FORCE_REGISTER_FIRST === 'true' && user) {
       logger.debug('Development mode: Forcing register page first')
       setUser(null)
       setProfile(null)
