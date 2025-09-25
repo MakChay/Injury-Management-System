@@ -55,7 +55,7 @@ function App() {
         {/* Public routes */}
         <Route
           path="/login"
-          element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+          element={user ? <Navigate to="/login" replace /> : <LoginPage />}
         />
         {/* Auth aliases */}
         <Route
