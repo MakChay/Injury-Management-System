@@ -86,7 +86,7 @@ export interface TreatmentPlanTemplate {
   phases: Array<{
     title: string
     duration_days?: number
-    exercises: Array<{ name: string; sets?: number; reps?: number; notes?: string }>
+    exercises: Array<{ name: string; sets?: number; reps?: number; notes?: string; video_url?: string }>
   }>
 }
 

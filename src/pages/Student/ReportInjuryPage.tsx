@@ -44,6 +44,8 @@ export function ReportInjuryPage() {
     previous_injury: false,
     previous_injury_details: ''
   })
+  const [symptoms, setSymptoms] = useState<{ [k: string]: boolean }>({ swelling: false, bruising: false, instability: false, numbness: false, headache: false })
+  const [bodyMapSelection, setBodyMapSelection] = useState<string>('')
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -154,6 +156,12 @@ export function ReportInjuryPage() {
                     <option key={part} value={part}>{part}</option>
                   ))}
                 </select>
+                {/* Simple body map selector */}
+                <div className="mt-2 grid grid-cols-6 gap-1 text-xs">
+                  {bodyParts.filter(b => b !== 'Other').map((b) => (
+                    <button type="button" key={b} onClick={() => { setFormData({ ...formData, body_part: b }); setBodyMapSelection(b) }} className={`px-2 py-1 border rounded ${bodyMapSelection === b ? 'bg-blue-50 border-blue-400' : 'hover:bg-gray-50'}`}>{b}</button>
+                  ))}
+                </div>
                 {formData.body_part === 'Other' && (
                   <input
                     type="text"
@@ -213,6 +221,19 @@ export function ReportInjuryPage() {
                 <div className="w-12 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                   <span className="font-bold text-blue-700">{formData.pain_level}</span>
                 </div>
+              </div>
+            </div>
+
+            {/* Symptom checker */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Symptoms</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                {Object.keys(symptoms).map((k) => (
+                  <label key={k} className="flex items-center space-x-2">
+                    <input type="checkbox" checked={!!symptoms[k]} onChange={(e) => setSymptoms({ ...symptoms, [k]: e.target.checked })} />
+                    <span className="capitalize">{k}</span>
+                  </label>
+                ))}
               </div>
             </div>
           </div>

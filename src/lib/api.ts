@@ -74,6 +74,21 @@ export const api = {
     const map = new Map((students || []).map((s: any) => [s.id, s]))
     return (data || []).map((i: any) => ({ ...i, student_profile: map.get(i.student_id) || null }))
   },
+  async getStudentTreatmentPlans(student_id: string) {
+    if (!isSupabaseEnabled || !supabase) {
+      // derive via assignments
+      const assignments = await mockAPI.getAssignments(undefined, student_id)
+      // no mock plans persisted; return empty
+      return []
+    }
+    // find assignments for student
+    const { data: asg } = await supabase.from('practitioner_assignments').select('id').eq('student_id', student_id)
+    const ids = (asg || []).map((a: any) => a.id)
+    if (ids.length === 0) return []
+    const { data, error } = await supabase.from('treatment_plans').select('*').in('assignment_id', ids).order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  },
 
   async getAssignments(practitionerId?: string, studentId?: string) {
     if (!isSupabaseEnabled || !supabase) return mockAPI.getAssignments(practitionerId, studentId)
