@@ -64,6 +64,47 @@ export function AppointmentsPage() {
     }
   }
 
+  const toIcsDate = (d: Date) => {
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return (
+      d.getUTCFullYear().toString() +
+      pad(d.getUTCMonth() + 1) +
+      pad(d.getUTCDate()) + 'T' +
+      pad(d.getUTCHours()) +
+      pad(d.getUTCMinutes()) +
+      pad(d.getUTCSeconds()) + 'Z'
+    )
+  }
+
+  const downloadIcs = (apt: any) => {
+    const start = new Date(apt.appointment_date)
+    const end = new Date(start.getTime() + (apt.duration_minutes || 45) * 60000)
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//DUT AIM//Appointments//EN',
+      'BEGIN:VEVENT',
+      `UID:${apt.id}@dut-aim`,
+      `DTSTAMP:${toIcsDate(new Date())}`,
+      `DTSTART:${toIcsDate(start)}`,
+      `DTEND:${toIcsDate(end)}`,
+      `SUMMARY:DUT Appointment`,
+      `DESCRIPTION:${(apt.notes || '').toString().replace(/\n/g, '\\n')}`,
+      apt.location ? `LOCATION:${apt.location}` : '',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].filter(Boolean)
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `appointment-${apt.id}.ics`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
@@ -244,7 +285,10 @@ export function AppointmentsPage() {
                   </div>
                 </div>
               </div>
-              <span className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700">{apt.status}</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs px-2 py-1 rounded bg-blue-50 text-blue-700">{apt.status}</span>
+                <button onClick={() => downloadIcs(apt)} className="text-xs px-2 py-1 rounded border hover:bg-gray-50">ICS</button>
+              </div>
             </div>
           ))}
           {appointments.length === 0 && (
