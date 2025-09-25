@@ -44,12 +44,38 @@ function App() {
           path="/login"
           element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />}
         />
+        {/* Auth aliases */}
+        <Route
+          path="/signin"
+          element={<Navigate to="/login" replace />}
+        />
+        <Route
+          path="/sign-in"
+          element={<Navigate to="/login" replace />}
+        />
         <Route
           path="/register"
           element={user ? <Navigate to="/dashboard" replace /> : <RegisterPage />}
         />
+        <Route
+          path="/signup"
+          element={<Navigate to="/register" replace />}
+        />
+        <Route
+          path="/sign-up"
+          element={<Navigate to="/register" replace />}
+        />
+        <Route
+          path="/auth/login"
+          element={<Navigate to="/login" replace />}
+        />
+        <Route
+          path="/auth/register"
+          element={<Navigate to="/register" replace />}
+        />
 
         <Route path="/logout" element={<LogoutPage />} />
+        <Route path="/signout" element={<Navigate to="/logout" replace />} />
 
         {/* Protected routes */}
         <Route
