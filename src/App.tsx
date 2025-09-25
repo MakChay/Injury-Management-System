@@ -53,6 +53,7 @@ function App() {
   const { user, loading } = useAuth()
   useReminders()
 
+
   if (loading) {
     return <LoadingScreen />
   }

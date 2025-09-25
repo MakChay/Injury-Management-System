@@ -7,6 +7,15 @@ export function useAuth() {
   const [profile, setProfile] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Force no user for testing - ensures register page shows first
+  useEffect(() => {
+    if (user) {
+      console.log('FORCING USER TO NULL FOR TESTING')
+      setUser(null)
+      setProfile(null)
+    }
+  }, [user])
+
   useEffect(() => {
     const initAuth = async () => {
       try {
