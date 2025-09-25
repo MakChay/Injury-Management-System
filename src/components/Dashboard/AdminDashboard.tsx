@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { Users, Activity, TrendingUp, AlertTriangle, Calendar, UserPlus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { mockAPI, mockUsers, mockInjuries, mockAppointments } from '../../lib/mockData'
+//
 import { api } from '../../lib/api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
@@ -31,7 +31,7 @@ export function AdminDashboard() {
       const students = await api.getUsers('student')
       const practitioners = await api.getUsers('practitioner')
       const injuries = await api.getInjuries()
-      const assignments = await api.getAssignments()
+      await api.getAssignments()
       const appointments = await api.getAppointments('', 'admin' as any)
 
       const activeInjuries = injuries.filter(i => 

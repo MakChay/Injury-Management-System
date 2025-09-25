@@ -3,17 +3,20 @@ import { motion } from 'framer-motion'
 import { Send } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { api } from '../../lib/api'
+import { supabase, isSupabaseEnabled } from '../../lib/supabase'
 
 export function MessagesPage() {
   const { user } = useAuth()
   const [messages, setMessages] = useState<any[]>([])
   const [text, setText] = useState('')
   const [receiverId, setReceiverId] = useState('')
+  const [contacts, setContacts] = useState<any[]>([])
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!user) return
     fetchMessages()
+    preloadContacts()
     const unsubscribe = api.onMessageRealtime(user.id, (msg) => {
       setMessages((prev) => [msg, ...prev])
     })
@@ -30,6 +33,12 @@ export function MessagesPage() {
     setMessages(data)
   }
 
+  const preloadContacts = async () => {
+    if (!user || !isSupabaseEnabled || !supabase) return
+    const { data } = await supabase.from('profiles').select('id, full_name, role').neq('id', user.id)
+    setContacts(data || [])
+  }
+
   const send = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !text || !receiverId) return
@@ -43,14 +52,18 @@ export function MessagesPage() {
         <h2 className="font-semibold mb-2">Start a conversation</h2>
         <form onSubmit={send} className="space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-1">Receiver ID</label>
-            <input
+            <label className="block text-sm font-medium mb-1">Receiver</label>
+            <select
               value={receiverId}
               onChange={(e) => setReceiverId(e.target.value)}
               className="w-full border rounded px-3 py-2"
-              placeholder="UUID"
               required
-            />
+            >
+              <option value="">Select user</option>
+              {contacts.map((c) => (
+                <option key={c.id} value={c.id}>{c.full_name} ({c.role})</option>
+              ))}
+            </select>
           </div>
           <div className="flex items-center space-x-2">
             <input

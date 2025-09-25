@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Users, Calendar, ClipboardList, TrendingUp, Clock, CheckCircle } from 'lucide-react'
+import { Users, Calendar, ClipboardList, Clock, CheckCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { mockAPI, mockUsers, type Assignment, type Appointment, type User } from '../../lib/mockData'

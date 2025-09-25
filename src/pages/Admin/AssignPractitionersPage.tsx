@@ -78,7 +78,7 @@ export function AssignPractitionersPage() {
             <select value={form.injury_id} onChange={(e) => setForm({ ...form, injury_id: e.target.value })} className="w-full border rounded px-3 py-2" required>
               <option value="">Select injury</option>
               {injuries.map((i) => (
-                <option key={i.id} value={i.id}>{i.injury_type} • {new Date(i.date_reported).toLocaleDateString()}</option>
+                <option key={i.id} value={i.id}>{i.injury_type} • {i.severity}</option>
               ))}
             </select>
           </div>

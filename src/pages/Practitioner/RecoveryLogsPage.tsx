@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { ClipboardList, Plus } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { api } from '../../lib/api'
+//
 
 export function RecoveryLogsPage() {
   const { user, isPractitioner } = useAuth()
@@ -16,16 +17,24 @@ export function RecoveryLogsPage() {
     mobility_score: 5,
     next_session_plan: ''
   })
+  const [assignments, setAssignments] = useState<any[]>([])
 
   useEffect(() => {
     if (!user) return
     load()
+    preloadAssignments()
   }, [user])
 
   const load = async () => {
     if (!user) return
     const data = await api.getRecoveryLogs({ practitioner_id: user.id })
     setLogs(data)
+  }
+
+  const preloadAssignments = async () => {
+    if (!user) return
+    const data = await api.getAssignments(user.id)
+    setAssignments(data)
   }
 
   const submit = async (e: React.FormEvent) => {
@@ -60,14 +69,18 @@ export function RecoveryLogsPage() {
       {showForm && (
         <form onSubmit={submit} className="bg-white border rounded-lg p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Assignment ID</label>
-            <input
+            <label className="block text-sm font-medium mb-1">Assignment</label>
+            <select
               value={form.assignment_id}
               onChange={(e) => setForm({ ...form, assignment_id: e.target.value })}
               className="w-full border rounded px-3 py-2"
-              placeholder="UUID from assignment"
               required
-            />
+            >
+              <option value="">Select assignment</option>
+              {assignments.map((a) => (
+                <option key={a.id} value={a.id}>{a.id.slice(0,8)} • Student {a.student_id.slice(0,8)}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Progress Notes</label>

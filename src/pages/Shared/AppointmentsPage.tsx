@@ -13,7 +13,7 @@ interface AppointmentForm {
 }
 
 export function AppointmentsPage() {
-  const { user, isStudent, isPractitioner } = useAuth()
+  const { user, isStudent, isPractitioner, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
   const [appointments, setAppointments] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
@@ -24,10 +24,14 @@ export function AppointmentsPage() {
     location: '',
     notes: ''
   })
+  const [practitioners, setPractitioners] = useState<any[]>([])
+  const [assignedStudents, setAssignedStudents] = useState<any[]>([])
+  // const [allStudents, setAllStudents] = useState<any[]>([])
 
   useEffect(() => {
     if (!user) return
     fetchAppointments()
+    preloadSelectors()
   }, [user])
 
   const fetchAppointments = async () => {
@@ -39,6 +43,24 @@ export function AppointmentsPage() {
       setAppointments(data)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const preloadSelectors = async () => {
+    if (!user) return
+    if (isStudent || isAdmin) {
+      const pracs = await api.getUsers('practitioner')
+      setPractitioners(pracs)
+    }
+    if (isPractitioner) {
+      const [assignments, students] = await Promise.all([
+        api.getAssignments(user.id),
+        api.getUsers('student'),
+      ])
+      const assignedIds = new Set(assignments.map((a: any) => a.student_id))
+      setAssignedStudents(students.filter((s: any) => assignedIds.has(s.id)))
+    } else if (isAdmin) {
+      // Admin selector deferred
     }
   }
 
@@ -95,14 +117,34 @@ export function AppointmentsPage() {
         >
           {isStudent && (
             <div>
-              <label className="block text-sm font-medium mb-1">Practitioner ID</label>
-              <input
+              <label className="block text-sm font-medium mb-1">Practitioner</label>
+              <select
                 value={form.practitioner_id}
                 onChange={(e) => setForm({ ...form, practitioner_id: e.target.value })}
                 className="w-full border rounded px-3 py-2"
-                placeholder="UUID of practitioner"
                 required
-              />
+              >
+                <option value="">Select practitioner</option>
+                {practitioners.map((p) => (
+                  <option key={p.id} value={p.id}>{p.full_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {isPractitioner && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Student</label>
+              <select
+                value={form.practitioner_id}
+                onChange={(e) => setForm({ ...form, practitioner_id: e.target.value })}
+                className="w-full border rounded px-3 py-2"
+                required
+              >
+                <option value="">Select student</option>
+                {assignedStudents.map((s) => (
+                  <option key={s.id} value={s.id}>{s.full_name}</option>
+                ))}
+              </select>
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -167,6 +209,18 @@ export function AppointmentsPage() {
                   <div className="text-sm text-gray-500 flex items-center space-x-2">
                     <Clock className="w-4 h-4" />
                     <span>{apt.duration_minutes} min</span>
+                    {isStudent && (
+                      <>
+                        <span>•</span>
+                        <span>With Practitioner: {practitioners.find(p => p.id === apt.practitioner_id)?.full_name || apt.practitioner_id}</span>
+                      </>
+                    )}
+                    {isPractitioner && (
+                      <>
+                        <span>•</span>
+                        <span>With Student: {assignedStudents.find(s => s.id === apt.student_id)?.full_name || apt.student_id}</span>
+                      </>
+                    )}
                     {apt.location && (
                       <>
                         <span>•</span>

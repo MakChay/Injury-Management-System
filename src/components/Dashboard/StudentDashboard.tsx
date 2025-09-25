@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
-import { Plus, Activity, Calendar, MessageSquare, AlertTriangle, TrendingUp } from 'lucide-react'
+import { Plus, Activity, Calendar, MessageSquare, AlertTriangle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { mockAPI, type Injury, type Appointment, type Message } from '../../lib/mockData'
+import { mockAPI, type Injury } from '../../lib/mockData'
 import { useAuth } from '../../hooks/useAuth'
 
 export function StudentDashboard() {

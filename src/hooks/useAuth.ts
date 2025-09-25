@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { mockAuth, mockCurrentUser, type User } from '../lib/mockData'
+import { mockAuth, type User } from '../lib/mockData'
 import { supabase, isSupabaseEnabled } from '../lib/supabase'
 
 export function useAuth() {
@@ -100,7 +100,7 @@ export function useAuth() {
           .select('*')
           .eq('id', sessionUser.id)
           .single()
-        if (profileError) return { error: profileError }
+        if (profileError) return { error: profileError as any }
         const authedUser: User = {
           id: profileRow.id,
           email: profileRow.email,
@@ -118,16 +118,16 @@ export function useAuth() {
         setProfile(authedUser)
         return { error: null }
       } else {
-        const { user, error } = await mockAuth.signIn(email, password)
-        if (error) {
-          return { error }
+        const { user, error: mockError } = await mockAuth.signIn(email, password)
+        if (mockError) {
+          return { error: mockError }
         }
         setUser(user)
         setProfile(user)
         return { error: null }
       }
-    } catch (error) {
-      return { error }
+    } catch (error: unknown) {
+      return { error: error instanceof Error ? error : new Error('Sign in failed') }
     } finally {
       setLoading(false)
     }
@@ -169,16 +169,16 @@ export function useAuth() {
         setProfile(profile)
         return { error: null }
       } else {
-        const { user, error } = await mockAuth.signUp(userData)
-        if (error) {
-          throw new Error(error.message)
+        const { user, error: mockError } = await mockAuth.signUp(userData)
+        if (mockError) {
+          return { error: mockError }
         }
         setUser(user)
         setProfile(user)
         return { error: null }
       }
-    } catch (error) {
-      return { error }
+    } catch (error: any) {
+      return { error: error instanceof Error ? error : new Error('Sign up failed') }
     } finally {
       setLoading(false)
     }
