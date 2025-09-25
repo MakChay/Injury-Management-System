@@ -3,9 +3,6 @@ import { useAuth } from './hooks/useAuth'
 import { useReminders } from './hooks/useReminders'
 import { Layout } from './components/Layout/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
-import { AuthLayout } from './components/Auth/AuthLayout'
-import { LoginForm } from './components/Auth/LoginForm'
-import { RegisterForm } from './components/Auth/RegisterForm'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { PageLoading } from './components/LoadingSpinner'
 
@@ -70,9 +67,7 @@ function App() {
             user ? (
               <Navigate to="/dashboard" replace />
             ) : (
-              <AuthLayout title="Sign In" subtitle="Welcome back to DUT Athletic Injury Management">
-                <LoginForm />
-              </AuthLayout>
+              <LoginPage />
             )
           } 
         />
@@ -82,9 +77,7 @@ function App() {
             user ? (
               <Navigate to="/dashboard" replace />
             ) : (
-            <AuthLayout title="Get Started" subtitle="Create your account to access DUT Athletic Injury Management">
-              <RegisterForm />
-            </AuthLayout>
+              <RegisterPage />
             )
           } 
         />
