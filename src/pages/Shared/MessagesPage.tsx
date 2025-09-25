@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Send } from 'lucide-react'
+import { Send, Paperclip } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { api } from '../../lib/api'
 import { supabase, isSupabaseEnabled } from '../../lib/supabase'
@@ -11,6 +11,7 @@ export function MessagesPage() {
   const [text, setText] = useState('')
   const [receiverId, setReceiverId] = useState('')
   const [contacts, setContacts] = useState<any[]>([])
+  const [file, setFile] = useState<File | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -44,7 +45,13 @@ export function MessagesPage() {
     if (!user || !text || !receiverId) return
     try {
       await api.sendMessage({ sender_id: user.id, receiver_id: receiverId, message: text })
+      if (file && isSupabaseEnabled && supabase) {
+        const path = `messages/${user.id}/${Date.now()}-${file.name}`
+        await api.uploadFile(file, path)
+        await api.linkFileRow({ uploaded_by: user.id, assignment_id: null, file_url: path, file_type: file.type || 'attachment' })
+      }
       setText('')
+      setFile(null)
       // @ts-ignore
       const { pushToast } = await import('../../components/Toaster')
       pushToast({ type: 'success', message: 'Message sent' })
@@ -82,10 +89,15 @@ export function MessagesPage() {
               placeholder="Type a message"
               required
             />
+            <label className="p-2 border rounded cursor-pointer hover:bg-gray-50" title="Attach file">
+              <Paperclip className="w-4 h-4" />
+              <input type="file" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            </label>
             <motion.button whileTap={{ scale: 0.98 }} className="bg-blue-600 text-white px-3 py-2 rounded">
               <Send className="w-4 h-4" />
             </motion.button>
           </div>
+          {file && <div className="text-xs text-gray-600">Attached: {file.name}</div>}
         </form>
       </div>
       <div className="lg:col-span-2 bg-white border rounded-lg">

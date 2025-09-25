@@ -22,6 +22,9 @@ export type Database = {
           profile_pic: string | null
           phone: string | null
           student_number: string | null
+          position: string | null
+          dominant_side: string | null
+          injury_history: any | null
           specialization: string | null
           bio: string | null
           created_at: string
@@ -35,6 +38,9 @@ export type Database = {
           profile_pic?: string | null
           phone?: string | null
           student_number?: string | null
+          position?: string | null
+          dominant_side?: string | null
+          injury_history?: any | null
           specialization?: string | null
           bio?: string | null
         }
@@ -45,6 +51,9 @@ export type Database = {
           profile_pic?: string | null
           phone?: string | null
           student_number?: string | null
+          position?: string | null
+          dominant_side?: string | null
+          injury_history?: any | null
           specialization?: string | null
           bio?: string | null
         }
@@ -59,6 +68,8 @@ export type Database = {
           body_part: string
           date_occurred: string
           date_reported: string
+          date_returned: string | null
+          days_lost: number | null
           status: 'reported' | 'assigned' | 'in_treatment' | 'recovering' | 'resolved'
           activity_when_injured: string | null
           pain_level: number | null
@@ -72,6 +83,8 @@ export type Database = {
           description: string
           body_part: string
           date_occurred: string
+          date_returned?: string | null
+          days_lost?: number | null
           activity_when_injured?: string | null
           pain_level?: number | null
         }
@@ -82,8 +95,150 @@ export type Database = {
           body_part?: string
           date_occurred?: string
           status?: 'reported' | 'assigned' | 'in_treatment' | 'recovering' | 'resolved'
+          date_returned?: string | null
+          days_lost?: number | null
           activity_when_injured?: string | null
           pain_level?: number | null
+        }
+      }
+      , plan_templates: {
+        Row: {
+          id: string
+          name: string
+          injury_type: string
+          sport: string | null
+          phases: any
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          name: string
+          injury_type: string
+          sport?: string | null
+          phases: any
+          created_by?: string | null
+        }
+        Update: {
+          name?: string
+          injury_type?: string
+          sport?: string | null
+          phases?: any
+        }
+      }
+      , treatment_plans: {
+        Row: {
+          id: string
+          assignment_id: string
+          template_id: string | null
+          title: string
+          phases: any
+          created_at: string
+        }
+        Insert: {
+          assignment_id: string
+          template_id?: string | null
+          title: string
+          phases: any
+        }
+        Update: {
+          title?: string
+          phases?: any
+        }
+      }
+      , notification_preferences: {
+        Row: {
+          id: string
+          email_reminders: boolean
+          sms_reminders: boolean
+          reminder_window_minutes: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          email_reminders?: boolean
+          sms_reminders?: boolean
+          reminder_window_minutes?: number
+        }
+        Update: {
+          email_reminders?: boolean
+          sms_reminders?: boolean
+          reminder_window_minutes?: number
+        }
+      }
+      , daily_checkins: {
+        Row: {
+          id: string
+          student_id: string
+          checkin_date: string
+          pain_level: number | null
+          swelling: number | null
+          rom: number | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          student_id: string
+          checkin_date?: string
+          pain_level?: number | null
+          swelling?: number | null
+          rom?: number | null
+          notes?: string | null
+        }
+        Update: {
+          pain_level?: number | null
+          swelling?: number | null
+          rom?: number | null
+          notes?: string | null
+        }
+      }
+      , rtp_checklists: {
+        Row: {
+          id: string
+          student_id: string
+          sport: string | null
+          criteria: any
+          status: 'in_progress' | 'ready' | 'cleared'
+          cleared_by: string | null
+          cleared_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          student_id: string
+          sport?: string | null
+          criteria: any
+          status?: 'in_progress' | 'ready' | 'cleared'
+        }
+        Update: {
+          sport?: string | null
+          criteria?: any
+          status?: 'in_progress' | 'ready' | 'cleared'
+          cleared_by?: string | null
+          cleared_at?: string | null
+        }
+      }
+      , session_notes: {
+        Row: {
+          id: string
+          assignment_id: string
+          practitioner_id: string
+          soap_notes: string
+          vitals: any | null
+          contraindications: string | null
+          created_at: string
+        }
+        Insert: {
+          assignment_id: string
+          practitioner_id: string
+          soap_notes: string
+          vitals?: any | null
+          contraindications?: string | null
+        }
+        Update: {
+          soap_notes?: string
+          vitals?: any | null
+          contraindications?: string | null
         }
       }
     }

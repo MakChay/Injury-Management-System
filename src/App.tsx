@@ -15,12 +15,25 @@ import { FilesPage } from './pages/Shared/FilesPage'
 import { RecoveryLogsPage } from './pages/Practitioner/RecoveryLogsPage'
 import { AssignPractitionersPage } from './pages/Admin/AssignPractitionersPage'
 import { LogoutPage } from './pages/Auth/LogoutPage'
+import { ForgotPasswordPage } from './pages/Auth/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/Auth/ResetPasswordPage'
+import { VerifyEmailPage } from './pages/Auth/VerifyEmailPage'
 //
 import { TreatmentPlansPage } from './pages/Practitioner/TreatmentPlansPage'
+import { SessionNotesPage } from './pages/Practitioner/SessionNotesPage'
+import { TemplateBuilderPage } from './pages/Practitioner/TemplateBuilderPage'
 import { ProfilePage } from './pages/Settings/ProfilePage'
+import { OnboardingPage } from './pages/Student/OnboardingPage'
+import { DailyCheckInPage } from './pages/Student/DailyCheckInPage'
+import { RTPChecklistPage } from './pages/Student/RTPChecklistPage'
+import { LearningHubPage } from './pages/Student/LearningHubPage'
+import { useReminders } from './hooks/useReminders'
+import { AnalyticsPage } from './pages/Admin/AnalyticsPage'
+import { SystemStatusPage } from './pages/Admin/SystemStatusPage'
 
 function App() {
   const { user, loading } = useAuth()
+  useReminders()
 
   if (loading) {
     return (
@@ -44,12 +57,56 @@ function App() {
           path="/login"
           element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />}
         />
+        {/* Auth aliases */}
+        <Route
+          path="/signin"
+          element={<Navigate to="/login" replace />}
+        />
+        <Route
+          path="/sign-in"
+          element={<Navigate to="/login" replace />}
+        />
         <Route
           path="/register"
           element={user ? <Navigate to="/dashboard" replace /> : <RegisterPage />}
         />
+        <Route
+          path="/signup"
+          element={<Navigate to="/register" replace />}
+        />
+        <Route
+          path="/sign-up"
+          element={<Navigate to="/register" replace />}
+        />
+        <Route
+          path="/auth/login"
+          element={<Navigate to="/login" replace />}
+        />
+        <Route
+          path="/auth/register"
+          element={<Navigate to="/register" replace />}
+        />
 
         <Route path="/logout" element={<LogoutPage />} />
+        <Route path="/signout" element={<Navigate to="/logout" replace />} />
+
+        {/* Password reset & verification */}
+        <Route
+          path="/forgot-password"
+          element={user ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />}
+        />
+        <Route
+          path="/reset-password"
+          element={<ResetPasswordPage />}
+        />
+        <Route
+          path="/verify-email"
+          element={<VerifyEmailPage />}
+        />
+        <Route
+          path="/auth/verify"
+          element={<Navigate to="/verify-email" replace />}
+        />
 
         {/* Protected routes */}
         <Route
@@ -70,6 +127,46 @@ function App() {
             <ProtectedRoute requiredRole="student">
               <Layout>
                 <ReportInjuryPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Layout>
+                <OnboardingPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/daily-checkin"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Layout>
+                <DailyCheckInPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rtp-checklist"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Layout>
+                <RTPChecklistPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/learning-hub"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Layout>
+                <LearningHubPage />
               </Layout>
             </ProtectedRoute>
           }
@@ -108,6 +205,26 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/session-notes"
+          element={
+            <ProtectedRoute requiredRole="practitioner">
+              <Layout>
+                <SessionNotesPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/template-builder"
+          element={
+            <ProtectedRoute requiredRole="practitioner">
+              <Layout>
+                <TemplateBuilderPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin routes */}
         <Route
@@ -131,16 +248,23 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/system-status"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Layout>
+                <SystemStatusPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/analytics"
           element={
             <ProtectedRoute requiredRole="admin">
               <Layout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">Analytics</h1>
-                  <p className="text-gray-600">Feature coming soon...</p>
-                </div>
+                <AnalyticsPage />
               </Layout>
             </ProtectedRoute>
           }

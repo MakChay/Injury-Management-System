@@ -143,6 +143,10 @@ export function useAuth() {
         })
         if (error) return { error }
         const newUser = data.user
+        // If email confirmations are enabled, session may be null; defer profile creation
+        if (!data.session) {
+          return { error: null, pendingVerification: true }
+        }
         if (!newUser) return { error: new Error('No user created') }
         const { error: upsertError } = await supabase.from('profiles').upsert({
           id: newUser.id,
@@ -186,6 +190,43 @@ export function useAuth() {
     }
   }
 
+  const requestPasswordReset = async (email: string) => {
+    setLoading(true)
+    try {
+      if (isSupabaseEnabled && supabase) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        })
+        return { error: error || null }
+      } else {
+        // Mock: pretend success
+        await new Promise((r) => setTimeout(r, 500))
+        return { error: null }
+      }
+    } catch (error: unknown) {
+      return { error: error instanceof Error ? error : new Error('Password reset failed') }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updatePassword = async (newPassword: string) => {
+    setLoading(true)
+    try {
+      if (isSupabaseEnabled && supabase) {
+        const { error } = await supabase.auth.updateUser({ password: newPassword })
+        return { error: error || null }
+      } else {
+        await new Promise((r) => setTimeout(r, 500))
+        return { error: null }
+      }
+    } catch (error: unknown) {
+      return { error: error instanceof Error ? error : new Error('Update password failed') }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const signOut = async () => {
     try {
       if (isSupabaseEnabled && supabase) {
@@ -207,6 +248,8 @@ export function useAuth() {
     signIn,
     signUp,
     signOut,
+    requestPasswordReset,
+    updatePassword,
     isAdmin: profile?.role === 'admin',
     isPractitioner: profile?.role === 'practitioner',
     isStudent: profile?.role === 'student',

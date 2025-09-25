@@ -12,6 +12,59 @@ export const api = {
     const map = new Map((students || []).map((s: any) => [s.id, s]))
     return (data || []).map((i: any) => ({ ...i, student_profile: map.get(i.student_id) || null }))
   },
+  async upsertProfileOnboarding(payload: { id: string; sport?: string | null; position?: string | null; dominant_side?: string | null; injury_history?: any | null }) {
+    if (!isSupabaseEnabled || !supabase) return payload
+    const { data, error } = await supabase.from('profiles').update(payload).eq('id', payload.id).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async createDailyCheckin(payload: { student_id: string; pain_level?: number; swelling?: number; rom?: number; notes?: string }) {
+    if (!isSupabaseEnabled || !supabase) return { id: `chk-${Date.now()}`, ...payload }
+    const { data, error } = await supabase.from('daily_checkins').insert(payload).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async getDailyCheckins(student_id: string) {
+    if (!isSupabaseEnabled || !supabase) return []
+    const { data, error } = await supabase.from('daily_checkins').select('*').eq('student_id', student_id).order('checkin_date', { ascending: false })
+    if (error) throw error
+    return data
+  },
+  async upsertRtpChecklist(payload: { id?: string; student_id: string; sport?: string | null; criteria: any; status?: 'in_progress' | 'ready' | 'cleared'; cleared_by?: string | null; cleared_at?: string | null }) {
+    if (!isSupabaseEnabled || !supabase) return { id: payload.id || `rtp-${Date.now()}`, ...payload }
+    const { data, error } = await supabase.from('rtp_checklists').upsert(payload).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async getRtpChecklist(student_id: string) {
+    if (!isSupabaseEnabled || !supabase) return null
+    const { data } = await supabase.from('rtp_checklists').select('*').eq('student_id', student_id).limit(1).single()
+    return data
+  },
+  async getAllRtpChecklists() {
+    if (!isSupabaseEnabled || !supabase) return []
+    const { data, error } = await supabase.from('rtp_checklists').select('*')
+    if (error) throw error
+    return data
+  },
+  async getAllInjuries() {
+    if (!isSupabaseEnabled || !supabase) return []
+    const { data, error } = await supabase.from('injuries').select('*')
+    if (error) throw error
+    return data
+  },
+  async createSessionNote(payload: { assignment_id: string; practitioner_id: string; soap_notes: string; vitals?: any; contraindications?: string }) {
+    if (!isSupabaseEnabled || !supabase) return { id: `note-${Date.now()}`, ...payload }
+    const { data, error } = await supabase.from('session_notes').insert(payload).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async getSessionNotes(assignment_id: string) {
+    if (!isSupabaseEnabled || !supabase) return []
+    const { data, error } = await supabase.from('session_notes').select('*').eq('assignment_id', assignment_id).order('created_at', { ascending: false })
+    if (error) throw error
+    return data
+  },
 
   async createInjury(injuryData: any) {
     if (!isSupabaseEnabled || !supabase) return mockAPI.createInjury(injuryData)
@@ -32,6 +85,21 @@ export const api = {
     const { data: students } = await supabase.from('profiles').select('id, full_name, sport').in('id', studentIds)
     const map = new Map((students || []).map((s: any) => [s.id, s]))
     return (data || []).map((i: any) => ({ ...i, student_profile: map.get(i.student_id) || null }))
+  },
+  async getStudentTreatmentPlans(student_id: string) {
+    if (!isSupabaseEnabled || !supabase) {
+      // derive via assignments
+      const assignments = await mockAPI.getAssignments(undefined, student_id)
+      // no mock plans persisted; return empty
+      return []
+    }
+    // find assignments for student
+    const { data: asg } = await supabase.from('practitioner_assignments').select('id').eq('student_id', student_id)
+    const ids = (asg || []).map((a: any) => a.id)
+    if (ids.length === 0) return []
+    const { data, error } = await supabase.from('treatment_plans').select('*').in('assignment_id', ids).order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
   },
 
   async getAssignments(practitionerId?: string, studentId?: string) {
@@ -234,6 +302,77 @@ export const api = {
   }) {
     if (!isSupabaseEnabled || !supabase) throw new Error('Supabase required')
     const { data, error } = await supabase.from('recovery_logs').insert(payload).select('*').single()
+    if (error) throw error
+    return data
+  },
+
+  async getPlanTemplates() {
+    if (!isSupabaseEnabled || !supabase) return mockAPI.getPlanTemplates()
+    const { data, error } = await supabase.from('plan_templates').select('*').order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  },
+  async createPlanTemplate(payload: { name: string; injury_type: string; sport?: string | null; phases: any }) {
+    if (!isSupabaseEnabled || !supabase) return { id: `tpl-${Date.now()}`, ...payload }
+    const { data, error } = await supabase.from('plan_templates').insert({ ...payload }).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async updatePlanTemplate(templateId: string, updates: { name?: string; injury_type?: string; sport?: string | null; phases?: any }) {
+    if (!isSupabaseEnabled || !supabase) return { id: templateId, ...updates }
+    const { data, error } = await supabase.from('plan_templates').update(updates).eq('id', templateId).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async clonePlanTemplate(templateId: string, overrides?: { name?: string }) {
+    if (!isSupabaseEnabled || !supabase) return { id: `tpl-${Date.now()}` }
+    const { data: tpl, error } = await supabase.from('plan_templates').select('*').eq('id', templateId).single()
+    if (error) throw error
+    const clone = { name: overrides?.name || `${tpl.name} (Copy)`, injury_type: tpl.injury_type, sport: tpl.sport, phases: tpl.phases }
+    const { data, error: e2 } = await supabase.from('plan_templates').insert(clone).select('*').single()
+    if (e2) throw e2
+    return data
+  },
+
+  async createPlanFromTemplate(assignment_id: string, template_id: string, title?: string) {
+    if (!isSupabaseEnabled || !supabase) return mockAPI.createPlanFromTemplate(assignment_id, template_id, title)
+    const { data: template, error: tErr } = await supabase.from('plan_templates').select('*').eq('id', template_id).single()
+    if (tErr) throw tErr
+    const phases = template?.phases || []
+    const payload = { assignment_id, template_id, title: title || template?.name || 'Plan', phases }
+    const { data, error } = await supabase.from('treatment_plans').insert(payload).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async updateTreatmentPlan(planId: string, updates: { title?: string; phases?: any }) {
+    if (!isSupabaseEnabled || !supabase) return { id: planId, ...updates }
+    const { data, error } = await supabase.from('treatment_plans').update(updates).eq('id', planId).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async getPractitionerPlans(practitioner_id: string) {
+    if (!isSupabaseEnabled || !supabase) return []
+    const { data: asg } = await supabase.from('practitioner_assignments').select('id').eq('practitioner_id', practitioner_id)
+    const ids = (asg || []).map((a: any) => a.id)
+    if (ids.length === 0) return []
+    const { data, error } = await supabase.from('treatment_plans').select('*').in('assignment_id', ids).order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  },
+
+  async getNotificationPreferences(userId: string) {
+    if (!isSupabaseEnabled || !supabase) {
+      return { id: userId, email_reminders: true, sms_reminders: false, reminder_window_minutes: 120 }
+    }
+    const { data, error } = await supabase.from('notification_preferences').select('*').eq('id', userId).single()
+    if (error && (error as any).code !== 'PGRST116') throw error
+    if (!data) return { id: userId, email_reminders: true, sms_reminders: false, reminder_window_minutes: 120 }
+    return data
+  },
+
+  async upsertNotificationPreferences(prefs: { id: string; email_reminders?: boolean; sms_reminders?: boolean; reminder_window_minutes?: number }) {
+    if (!isSupabaseEnabled || !supabase) return prefs
+    const { data, error } = await supabase.from('notification_preferences').upsert(prefs).select('*').single()
     if (error) throw error
     return data
   },

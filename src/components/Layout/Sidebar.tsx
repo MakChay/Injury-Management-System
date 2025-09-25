@@ -31,7 +31,10 @@ export function Sidebar() {
         ...common,
         { to: '/report-injury', icon: Plus, label: 'Report Injury' },
         { to: '/my-injuries', icon: Activity, label: 'My Injuries' },
-        { to: '/recovery', icon: Stethoscope, label: 'Recovery Plans' },
+        { to: '/daily-checkin', icon: ClipboardList, label: 'Daily Check-in' },
+        { to: '/rtp-checklist', icon: Stethoscope, label: 'RTP Checklist' },
+        { to: '/learning-hub', icon: FileText, label: 'Learning Hub' },
+        { to: '/onboarding', icon: Users, label: 'Onboarding' },
       ]
     }
 
@@ -40,7 +43,9 @@ export function Sidebar() {
         ...common,
         { to: '/assigned-athletes', icon: Users, label: 'My Athletes' },
         { to: '/recovery-logs', icon: ClipboardList, label: 'Recovery Logs' },
+        { to: '/session-notes', icon: FileText, label: 'Session Notes' },
         { to: '/treatment-plans', icon: Stethoscope, label: 'Treatment Plans' },
+        { to: '/template-builder', icon: ClipboardList, label: 'Template Builder' },
       ]
     }
 
@@ -50,6 +55,7 @@ export function Sidebar() {
         { to: '/manage-users', icon: Users, label: 'Manage Users' },
         { to: '/assign-practitioners', icon: Users, label: 'Assignments' },
         { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+        { to: '/system-status', icon: Settings, label: 'System Status' },
         { to: '/all-injuries', icon: Activity, label: 'All Injuries' },
       ]
     }
