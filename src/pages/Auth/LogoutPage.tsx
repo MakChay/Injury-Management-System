@@ -15,6 +15,7 @@ export function LogoutPage() {
       } catch (err) {
         console.error('Logout error:', err)
         setError('Failed to sign out. Redirecting to login...')
+        // Still redirect to login even if signOut fails
         setTimeout(() => {
           navigate('/login', { replace: true })
         }, 2000)
@@ -38,4 +39,3 @@ export function LogoutPage() {
     </div>
   )
 }
-
