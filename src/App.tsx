@@ -20,7 +20,12 @@ import { ResetPasswordPage } from './pages/Auth/ResetPasswordPage'
 import { VerifyEmailPage } from './pages/Auth/VerifyEmailPage'
 //
 import { TreatmentPlansPage } from './pages/Practitioner/TreatmentPlansPage'
+import { SessionNotesPage } from './pages/Practitioner/SessionNotesPage'
 import { ProfilePage } from './pages/Settings/ProfilePage'
+import { OnboardingPage } from './pages/Student/OnboardingPage'
+import { DailyCheckInPage } from './pages/Student/DailyCheckInPage'
+import { RTPChecklistPage } from './pages/Student/RTPChecklistPage'
+import { LearningHubPage } from './pages/Student/LearningHubPage'
 import { useReminders } from './hooks/useReminders'
 
 function App() {
@@ -123,6 +128,46 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Layout>
+                <OnboardingPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/daily-checkin"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Layout>
+                <DailyCheckInPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rtp-checklist"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Layout>
+                <RTPChecklistPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/learning-hub"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Layout>
+                <LearningHubPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/my-injuries"
@@ -153,6 +198,16 @@ function App() {
             <ProtectedRoute requiredRole="practitioner">
               <Layout>
                 <RecoveryLogsPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/session-notes"
+          element={
+            <ProtectedRoute requiredRole="practitioner">
+              <Layout>
+                <SessionNotesPage />
               </Layout>
             </ProtectedRoute>
           }

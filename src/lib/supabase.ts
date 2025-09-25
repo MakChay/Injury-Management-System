@@ -22,6 +22,9 @@ export type Database = {
           profile_pic: string | null
           phone: string | null
           student_number: string | null
+          position: string | null
+          dominant_side: string | null
+          injury_history: any | null
           specialization: string | null
           bio: string | null
           created_at: string
@@ -35,6 +38,9 @@ export type Database = {
           profile_pic?: string | null
           phone?: string | null
           student_number?: string | null
+          position?: string | null
+          dominant_side?: string | null
+          injury_history?: any | null
           specialization?: string | null
           bio?: string | null
         }
@@ -45,6 +51,9 @@ export type Database = {
           profile_pic?: string | null
           phone?: string | null
           student_number?: string | null
+          position?: string | null
+          dominant_side?: string | null
+          injury_history?: any | null
           specialization?: string | null
           bio?: string | null
         }
@@ -149,6 +158,81 @@ export type Database = {
           email_reminders?: boolean
           sms_reminders?: boolean
           reminder_window_minutes?: number
+        }
+      }
+      , daily_checkins: {
+        Row: {
+          id: string
+          student_id: string
+          checkin_date: string
+          pain_level: number | null
+          swelling: number | null
+          rom: number | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          student_id: string
+          checkin_date?: string
+          pain_level?: number | null
+          swelling?: number | null
+          rom?: number | null
+          notes?: string | null
+        }
+        Update: {
+          pain_level?: number | null
+          swelling?: number | null
+          rom?: number | null
+          notes?: string | null
+        }
+      }
+      , rtp_checklists: {
+        Row: {
+          id: string
+          student_id: string
+          sport: string | null
+          criteria: any
+          status: 'in_progress' | 'ready' | 'cleared'
+          cleared_by: string | null
+          cleared_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          student_id: string
+          sport?: string | null
+          criteria: any
+          status?: 'in_progress' | 'ready' | 'cleared'
+        }
+        Update: {
+          sport?: string | null
+          criteria?: any
+          status?: 'in_progress' | 'ready' | 'cleared'
+          cleared_by?: string | null
+          cleared_at?: string | null
+        }
+      }
+      , session_notes: {
+        Row: {
+          id: string
+          assignment_id: string
+          practitioner_id: string
+          soap_notes: string
+          vitals: any | null
+          contraindications: string | null
+          created_at: string
+        }
+        Insert: {
+          assignment_id: string
+          practitioner_id: string
+          soap_notes: string
+          vitals?: any | null
+          contraindications?: string | null
+        }
+        Update: {
+          soap_notes?: string
+          vitals?: any | null
+          contraindications?: string | null
         }
       }
     }

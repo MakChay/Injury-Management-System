@@ -9,6 +9,9 @@ create table if not exists profiles (
   phone text,
   student_number text,
   sport text,
+  position text,
+  dominant_side text,
+  injury_history jsonb,
   specialization text,
   bio text,
   created_at timestamptz not null default now(),
@@ -339,6 +342,85 @@ alter table notification_preferences enable row level security;
 create policy "prefs read own or admin" on notification_preferences
   for select using (
     id = auth.uid() or is_admin(auth.uid())
+  );
+
+-- Daily check-ins by students
+create table if not exists daily_checkins (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references profiles(id) on delete cascade,
+  checkin_date date not null default (now()::date),
+  pain_level int check (pain_level between 0 and 10),
+  swelling int check (swelling between 0 and 10),
+  rom int check (rom between 0 and 10),
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+alter table daily_checkins enable row level security;
+
+create policy "checkins read own, assigned, admin" on daily_checkins
+  for select using (
+    student_id = auth.uid() or is_admin(auth.uid()) or is_practitioner_assigned(auth.uid(), student_id)
+  );
+
+create policy "checkins insert student self or admin" on daily_checkins
+  for insert with check (
+    student_id = auth.uid() or is_admin(auth.uid())
+  );
+
+-- Return-to-play checklists
+create table if not exists rtp_checklists (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references profiles(id) on delete cascade,
+  sport text,
+  criteria jsonb not null,
+  status text not null default 'in_progress' check (status in ('in_progress','ready','cleared')),
+  cleared_by uuid references profiles(id),
+  cleared_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table rtp_checklists enable row level security;
+
+create policy "rtp read own, assigned, admin" on rtp_checklists
+  for select using (
+    student_id = auth.uid() or is_admin(auth.uid()) or is_practitioner_assigned(auth.uid(), student_id)
+  );
+
+create policy "rtp upsert own or assigned practitioner or admin" on rtp_checklists
+  for all using (
+    student_id = auth.uid() or is_admin(auth.uid()) or is_practitioner_assigned(auth.uid(), student_id)
+  ) with check (
+    student_id = auth.uid() or is_admin(auth.uid()) or is_practitioner_assigned(auth.uid(), student_id)
+  );
+
+-- Practitioner session notes (SOAP) linked to assignments
+create table if not exists session_notes (
+  id uuid primary key default gen_random_uuid(),
+  assignment_id uuid not null references practitioner_assignments(id) on delete cascade,
+  practitioner_id uuid not null references profiles(id) on delete cascade,
+  soap_notes text not null,
+  vitals jsonb,
+  contraindications text,
+  created_at timestamptz not null default now()
+);
+
+alter table session_notes enable row level security;
+
+create policy "notes read related or admin" on session_notes
+  for select using (
+    is_admin(auth.uid()) or exists (
+      select 1 from practitioner_assignments pa
+      where pa.id = session_notes.assignment_id and (pa.student_id = auth.uid() or pa.practitioner_id = auth.uid())
+    )
+  );
+
+create policy "notes insert assigned practitioner or admin" on session_notes
+  for insert with check (
+    is_admin(auth.uid()) or exists (
+      select 1 from practitioner_assignments pa where pa.id = assignment_id and pa.practitioner_id = auth.uid() and pa.active = true
+    )
   );
 
 create policy "prefs upsert own or admin" on notification_preferences

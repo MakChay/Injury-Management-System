@@ -12,6 +12,47 @@ export const api = {
     const map = new Map((students || []).map((s: any) => [s.id, s]))
     return (data || []).map((i: any) => ({ ...i, student_profile: map.get(i.student_id) || null }))
   },
+  async upsertProfileOnboarding(payload: { id: string; sport?: string | null; position?: string | null; dominant_side?: string | null; injury_history?: any | null }) {
+    if (!isSupabaseEnabled || !supabase) return payload
+    const { data, error } = await supabase.from('profiles').update(payload).eq('id', payload.id).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async createDailyCheckin(payload: { student_id: string; pain_level?: number; swelling?: number; rom?: number; notes?: string }) {
+    if (!isSupabaseEnabled || !supabase) return { id: `chk-${Date.now()}`, ...payload }
+    const { data, error } = await supabase.from('daily_checkins').insert(payload).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async getDailyCheckins(student_id: string) {
+    if (!isSupabaseEnabled || !supabase) return []
+    const { data, error } = await supabase.from('daily_checkins').select('*').eq('student_id', student_id).order('checkin_date', { ascending: false })
+    if (error) throw error
+    return data
+  },
+  async upsertRtpChecklist(payload: { id?: string; student_id: string; sport?: string | null; criteria: any; status?: 'in_progress' | 'ready' | 'cleared'; cleared_by?: string | null; cleared_at?: string | null }) {
+    if (!isSupabaseEnabled || !supabase) return { id: payload.id || `rtp-${Date.now()}`, ...payload }
+    const { data, error } = await supabase.from('rtp_checklists').upsert(payload).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async getRtpChecklist(student_id: string) {
+    if (!isSupabaseEnabled || !supabase) return null
+    const { data } = await supabase.from('rtp_checklists').select('*').eq('student_id', student_id).limit(1).single()
+    return data
+  },
+  async createSessionNote(payload: { assignment_id: string; practitioner_id: string; soap_notes: string; vitals?: any; contraindications?: string }) {
+    if (!isSupabaseEnabled || !supabase) return { id: `note-${Date.now()}`, ...payload }
+    const { data, error } = await supabase.from('session_notes').insert(payload).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async getSessionNotes(assignment_id: string) {
+    if (!isSupabaseEnabled || !supabase) return []
+    const { data, error } = await supabase.from('session_notes').select('*').eq('assignment_id', assignment_id).order('created_at', { ascending: false })
+    if (error) throw error
+    return data
+  },
 
   async createInjury(injuryData: any) {
     if (!isSupabaseEnabled || !supabase) return mockAPI.createInjury(injuryData)
