@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion'
 import { Users, Activity, TrendingUp, AlertTriangle, Calendar, UserPlus } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 //
 import { api } from '../../lib/api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
 export function AdminDashboard() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalPractitioners: 0,
@@ -24,16 +26,32 @@ export function AdminDashboard() {
   const [timeLossBySeverity, setTimeLossBySeverity] = useState<any[]>([])
   const [recurrenceRate, setRecurrenceRate] = useState(0)
   const [rtpTime, setRtpTime] = useState<number | null>(null)
+  const [filteredExport, setFilteredExport] = useState<any[]>([])
   const [filterStart, setFilterStart] = useState('')
   const [filterEnd, setFilterEnd] = useState('')
   const [filterSport, setFilterSport] = useState('all')
   const [filterSeverity, setFilterSeverity] = useState('all')
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [])
+    const params = new URLSearchParams(location.search)
+    const fs = params.get('start') || ''
+    const fe = params.get('end') || ''
+    const sp = params.get('sport') || 'all'
+    const sv = params.get('severity') || 'all'
+    setFilterStart(fs)
+    setFilterEnd(fe)
+    setFilterSport(sp)
+    setFilterSeverity(sv)
+    fetchDashboardData(fs, fe, sp, sv)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search])
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (
+    start = filterStart,
+    end = filterEnd,
+    sport = filterSport,
+    severity = filterSeverity,
+  ) => {
     try {
       setLoading(true)
       
@@ -48,20 +66,21 @@ export function AdminDashboard() {
       const allRtp = await api.getAllRtpChecklists()
 
       // Filters
-      const startDate = filterStart ? new Date(filterStart) : null
-      const endDate = filterEnd ? new Date(filterEnd) : null
+      const startDate = start ? new Date(start) : null
+      const endDate = end ? new Date(end) : null
       const filteredInjuries = (injuries as any[]).filter((inj: any) => {
         const d = new Date(inj.date_reported)
         if (startDate && d < startDate) return false
         if (endDate && d > endDate) return false
-        if (filterSeverity !== 'all' && inj.severity !== filterSeverity) return false
-        if (filterSport !== 'all') {
+        if (severity !== 'all' && inj.severity !== severity) return false
+        if (sport !== 'all') {
           const s = (students as any[]).find((st: any) => st.id === inj.student_id)
           const sport = s?.sport || 'Unknown'
-          if (sport !== filterSport) return false
+          if (sport !== sport) return false
         }
         return true
       })
+      setFilteredExport(filteredInjuries)
 
       const activeInjuries = injuries.filter(i => 
         ['reported', 'assigned', 'in_treatment', 'recovering'].includes(i.status)
@@ -230,7 +249,18 @@ export function AdminDashboard() {
           </div>
         </div>
         <div className="flex justify-end mt-3">
-          <button className="px-4 py-2 border rounded" onClick={fetchDashboardData}>Apply</button>
+          <button className="px-4 py-2 border rounded" onClick={() => {
+            const params = new URLSearchParams()
+            if (filterStart) params.set('start', filterStart)
+            if (filterEnd) params.set('end', filterEnd)
+            if (filterSport !== 'all') params.set('sport', filterSport)
+            if (filterSeverity !== 'all') params.set('severity', filterSeverity)
+            navigate({ search: params.toString() })
+          }}>Apply</button>
+          <button className="ml-2 px-4 py-2 border rounded" onClick={() => {
+            setFilterStart(''); setFilterEnd(''); setFilterSport('all'); setFilterSeverity('all');
+            navigate({ search: '' })
+          }}>Reset</button>
         </div>
       </div>
       <motion.div
@@ -507,6 +537,24 @@ export function AdminDashboard() {
           <div className="text-sm text-gray-600">Avg. RTP Time</div>
           <div className="text-3xl font-bold">{rtpTime !== null ? `${rtpTime} days` : '—'}</div>
         </div>
+      </div>
+
+      {/* Export */}
+      <div className="flex justify-end">
+        <button className="px-4 py-2 border rounded" onClick={() => {
+          const headers = ['id','student_id','injury_type','severity','body_part','date_reported','date_returned','days_lost','status']
+          const rows = filteredExport.map((i: any) => headers.map((h) => JSON.stringify(i[h] ?? '')).join(','))
+          const csv = [headers.join(','), ...rows].join('\n')
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = 'injuries_export.csv'
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+        }}>Export CSV</button>
       </div>
     </div>
   )
