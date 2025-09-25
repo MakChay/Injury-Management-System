@@ -1,83 +1,43 @@
-import { useEffect, useState } from 'react'
-import { api } from '../../lib/api'
+import { motion } from 'framer-motion'
+import { Wrench, Plus } from 'lucide-react'
 
 export function TemplateBuilderPage() {
-  const [templates, setTemplates] = useState<any[]>([])
-  const [name, setName] = useState('')
-  const [injuryType, setInjuryType] = useState('')
-  const [sport, setSport] = useState('')
-  const [phases, setPhases] = useState<any[]>([{ title: 'Phase 1', exercises: [] }])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    load()
-  }, [])
-
-  const load = async () => {
-    setLoading(true)
-    const tpls = await api.getPlanTemplates()
-    setTemplates(tpls as any)
-    setLoading(false)
-  }
-
-  const addExercise = (idx: number) => {
-    const next = [...phases]
-    next[idx].exercises.push({ name: 'New Exercise' })
-    setPhases(next)
-  }
-
-  const addPhase = () => setPhases([...phases, { title: `Phase ${phases.length + 1}`, exercises: [] }])
-
-  const save = async () => {
-    const payload = { name, injury_type: injuryType, sport: sport || null, phases }
-    await api.createPlanTemplate(payload)
-    setName(''); setInjuryType(''); setSport(''); setPhases([{ title: 'Phase 1', exercises: [] }])
-    await load()
-  }
-
-  if (loading) return <div className="p-6">Loading...</div>
-
   return (
-    <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-white border rounded-lg p-4 space-y-3">
-        <h2 className="font-semibold">Create Template</h2>
-        <input className="w-full border rounded px-3 py-2" placeholder="Template name" value={name} onChange={(e) => setName(e.target.value)} />
-        <input className="w-full border rounded px-3 py-2" placeholder="Injury type" value={injuryType} onChange={(e) => setInjuryType(e.target.value)} />
-        <input className="w-full border rounded px-3 py-2" placeholder="Sport (optional)" value={sport} onChange={(e) => setSport(e.target.value)} />
-        <div className="space-y-2">
-          {phases.map((p, idx) => (
-            <div key={idx} className="border rounded p-3 space-y-2">
-              <input className="w-full border rounded px-2 py-1" value={p.title} onChange={(e) => { const next = [...phases]; next[idx].title = e.target.value; setPhases(next) }} />
-              <div className="space-y-1">
-                {p.exercises.map((ex: any, i: number) => (
-                  <div key={i} className="flex items-center space-x-2">
-                    <input className="flex-1 border rounded px-2 py-1" value={ex.name} onChange={(e) => { const next = [...phases]; next[idx].exercises[i].name = e.target.value; setPhases(next) }} />
-                    <input className="w-28 border rounded px-2 py-1" placeholder="video url" value={ex.video_url || ''} onChange={(e) => { const next = [...phases]; next[idx].exercises[i].video_url = e.target.value; setPhases(next) }} />
-                  </div>
-                ))}
-              </div>
-              <button className="px-3 py-1 border rounded" onClick={() => addExercise(idx)}>Add exercise</button>
-            </div>
-          ))}
-          <button className="px-3 py-1 border rounded" onClick={addPhase}>Add phase</button>
+    <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+            <Wrench className="w-6 h-6 text-purple-600" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Template Builder</h1>
+            <p className="text-gray-600">Create and manage treatment plan templates</p>
+          </div>
         </div>
-        <div className="flex justify-end">
-          <button className="px-4 py-2 bg-green-600 text-white rounded" onClick={save} disabled={!name || !injuryType}>Save Template</button>
+        <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 hover:bg-blue-700 transition-colors">
+          <Plus className="w-5 h-5" />
+          <span>Create Template</span>
+        </button>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+      >
+        <div className="text-center py-12">
+          <Wrench className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Template Builder</h3>
+          <p className="text-gray-600">
+            This page will contain the template builder interface for practitioners.
+          </p>
         </div>
-      </div>
-      <div className="bg-white border rounded-lg">
-        <div className="p-4 border-b font-semibold">Existing Templates</div>
-        <div className="divide-y">
-          {templates.map((t: any) => (
-            <div key={t.id} className="p-4">
-              <div className="font-medium">{t.name}</div>
-              <div className="text-sm text-gray-600">{t.injury_type}{t.sport ? ` • ${t.sport}` : ''}</div>
-            </div>
-          ))}
-          {templates.length === 0 && <div className="p-6 text-center text-gray-500">No templates yet.</div>}
-        </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
-
