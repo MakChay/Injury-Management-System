@@ -53,14 +53,21 @@ export function RecoveryPlansPage() {
                       <div className="font-medium">{ph.title}</div>
                       <ul className="list-disc ml-5 text-sm text-gray-700">
                         {(ph.exercises || []).map((ex: any, i: number) => (
-                          <li key={i} className="flex items-center space-x-2">
+                          <li key={i} className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              {ex.video_url && (
+                                <a className="text-blue-600 flex items-center space-x-1" href={ex.video_url} target="_blank" rel="noreferrer">
+                                  <PlayCircle className="w-4 h-4" />
+                                  <span>Video</span>
+                                </a>
+                              )}
+                              <span>{ex.name}{ex.sets ? ` • ${ex.sets}x${ex.reps || ''}` : ''}</span>
+                            </div>
                             {ex.video_url && (
-                              <a className="text-blue-600 flex items-center space-x-1" href={ex.video_url} target="_blank" rel="noreferrer">
-                                <PlayCircle className="w-4 h-4" />
-                                <span>Video</span>
-                              </a>
+                              <video controls className="w-full max-w-md rounded border">
+                                <source src={ex.video_url} />
+                              </video>
                             )}
-                            <span>{ex.name}{ex.sets ? ` • ${ex.sets}x${ex.reps || ''}` : ''}</span>
                           </li>
                         ))}
                       </ul>

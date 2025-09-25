@@ -300,6 +300,27 @@ export const api = {
     if (error) throw error
     return data || []
   },
+  async createPlanTemplate(payload: { name: string; injury_type: string; sport?: string | null; phases: any }) {
+    if (!isSupabaseEnabled || !supabase) return { id: `tpl-${Date.now()}`, ...payload }
+    const { data, error } = await supabase.from('plan_templates').insert({ ...payload }).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async updatePlanTemplate(templateId: string, updates: { name?: string; injury_type?: string; sport?: string | null; phases?: any }) {
+    if (!isSupabaseEnabled || !supabase) return { id: templateId, ...updates }
+    const { data, error } = await supabase.from('plan_templates').update(updates).eq('id', templateId).select('*').single()
+    if (error) throw error
+    return data
+  },
+  async clonePlanTemplate(templateId: string, overrides?: { name?: string }) {
+    if (!isSupabaseEnabled || !supabase) return { id: `tpl-${Date.now()}` }
+    const { data: tpl, error } = await supabase.from('plan_templates').select('*').eq('id', templateId).single()
+    if (error) throw error
+    const clone = { name: overrides?.name || `${tpl.name} (Copy)`, injury_type: tpl.injury_type, sport: tpl.sport, phases: tpl.phases }
+    const { data, error: e2 } = await supabase.from('plan_templates').insert(clone).select('*').single()
+    if (e2) throw e2
+    return data
+  },
 
   async createPlanFromTemplate(assignment_id: string, template_id: string, title?: string) {
     if (!isSupabaseEnabled || !supabase) return mockAPI.createPlanFromTemplate(assignment_id, template_id, title)

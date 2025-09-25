@@ -45,6 +45,7 @@ export function Sidebar() {
         { to: '/recovery-logs', icon: ClipboardList, label: 'Recovery Logs' },
         { to: '/session-notes', icon: FileText, label: 'Session Notes' },
         { to: '/treatment-plans', icon: Stethoscope, label: 'Treatment Plans' },
+        { to: '/template-builder', icon: ClipboardList, label: 'Template Builder' },
       ]
     }
 

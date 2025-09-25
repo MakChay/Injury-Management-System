@@ -21,6 +21,7 @@ import { VerifyEmailPage } from './pages/Auth/VerifyEmailPage'
 //
 import { TreatmentPlansPage } from './pages/Practitioner/TreatmentPlansPage'
 import { SessionNotesPage } from './pages/Practitioner/SessionNotesPage'
+import { TemplateBuilderPage } from './pages/Practitioner/TemplateBuilderPage'
 import { ProfilePage } from './pages/Settings/ProfilePage'
 import { OnboardingPage } from './pages/Student/OnboardingPage'
 import { DailyCheckInPage } from './pages/Student/DailyCheckInPage'
@@ -208,6 +209,16 @@ function App() {
             <ProtectedRoute requiredRole="practitioner">
               <Layout>
                 <SessionNotesPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/template-builder"
+          element={
+            <ProtectedRoute requiredRole="practitioner">
+              <Layout>
+                <TemplateBuilderPage />
               </Layout>
             </ProtectedRoute>
           }
