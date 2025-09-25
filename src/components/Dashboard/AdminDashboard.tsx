@@ -18,6 +18,8 @@ export function AdminDashboard() {
   const [injuryTrends, setInjuryTrends] = useState<any[]>([])
   const [severityData, setSeverityData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [workload, setWorkload] = useState<any[]>([])
+  const [sportData, setSportData] = useState<any[]>([])
 
   useEffect(() => {
     fetchDashboardData()
@@ -87,6 +89,23 @@ export function AdminDashboard() {
       }))
 
       setSeverityData(severityChartData)
+
+      // Per-sport distribution
+      const studentSports = students.reduce((acc: any, s: any) => {
+        const key = s.sport || 'Unknown'
+        acc[key] = (acc[key] || 0) + 1
+        return acc
+      }, {})
+      setSportData(Object.entries(studentSports).map(([name, value]) => ({ name, value })))
+
+      // Practitioner workload: number of active assignments per practitioner
+      const assignments = await api.getAssignments()
+      const workloadMap: Record<string, number> = {}
+      ;(assignments as any[]).forEach((a: any) => {
+        if (a.active) workloadMap[a.practitioner_id] = (workloadMap[a.practitioner_id] || 0) + 1
+      })
+      const practitionerMap = new Map((practitioners as any[]).map((p: any) => [p.id, p.full_name]))
+      setWorkload(Object.entries(workloadMap).map(([id, count]) => ({ name: practitionerMap.get(id) || id, value: count })))
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {
@@ -288,6 +307,44 @@ export function AdminDashboard() {
               </Pie>
               <Tooltip />
             </PieChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Students by Sport */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+        >
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Students by Sport</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={sportData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="value" fill="#10b981" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Practitioner Workload */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0 }}
+          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+        >
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Practitioner Workload (Active Assignments)</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={workload}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" interval={0} angle={-15} textAnchor="end" height={60} />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="value" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         </motion.div>
       </div>

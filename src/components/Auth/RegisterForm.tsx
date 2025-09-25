@@ -13,6 +13,7 @@ export function RegisterForm() {
     role: 'student' as 'student' | 'practitioner' | 'admin',
     phone: '',
     studentNumber: '',
+    sport: '',
     specialization: ''
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -130,6 +131,22 @@ export function RegisterForm() {
                 placeholder="e.g., 21012345"
               />
             </div>
+          </div>
+        )}
+
+        {formData.role === 'student' && (
+          <div>
+            <label htmlFor="sport" className="block text-sm font-medium text-gray-700 mb-1">
+              Sport
+            </label>
+            <input
+              id="sport"
+              type="text"
+              value={formData.sport}
+              onChange={(e) => setFormData({ ...formData, sport: e.target.value })}
+              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              placeholder="e.g., Rugby, Soccer, Athletics"
+            />
           </div>
         )}
 

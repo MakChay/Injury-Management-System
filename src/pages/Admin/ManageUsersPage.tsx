@@ -202,6 +202,11 @@ export function ManageUsersPage() {
                           <span>#{user.student_number}</span>
                         </div>
                       )}
+                      {user.sport && (
+                        <div className="text-gray-600">
+                          <span className="font-medium">Sport:</span> {user.sport}
+                        </div>
+                      )}
                       {user.specialization && (
                         <div className="text-gray-600">
                           <span className="font-medium">Specialization:</span> {user.specialization}
