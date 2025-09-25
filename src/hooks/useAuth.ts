@@ -74,8 +74,13 @@ export function useAuth() {
           // Demo: use mock user
           await new Promise(resolve => setTimeout(resolve, 300))
           const currentUser = mockAuth.getCurrentUser()
-          setUser(currentUser)
-          setProfile(currentUser)
+          if (currentUser) {
+            setUser(currentUser)
+            setProfile(currentUser)
+          } else {
+            setUser(null)
+            setProfile(null)
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
@@ -122,8 +127,10 @@ export function useAuth() {
         if (mockError) {
           return { error: mockError }
         }
-        setUser(user)
-        setProfile(user)
+        if (user) {
+          setUser(user)
+          setProfile(user)
+        }
         return { error: null }
       }
     } catch (error: unknown) {
@@ -179,8 +186,10 @@ export function useAuth() {
         if (mockError) {
           return { error: mockError }
         }
-        setUser(user)
-        setProfile(user)
+        if (user) {
+          setUser(user)
+          setProfile(user)
+        }
         return { error: null }
       }
     } catch (error: any) {
@@ -234,10 +243,11 @@ export function useAuth() {
       } else {
         await mockAuth.signOut()
       }
-      setUser(null)
-      setProfile(null)
     } catch (error) {
       console.error('Sign out error:', error)
+    } finally {
+      setUser(null)
+      setProfile(null)
     }
   }
 
