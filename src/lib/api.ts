@@ -136,5 +136,42 @@ export const api = {
       supabase.removeChannel(channel)
     }
   },
+  async getFiles(uploadedBy?: string) {
+    if (!isSupabaseEnabled || !supabase) throw new Error('Supabase required')
+    let query = supabase.from('files').select('*').order('uploaded_at', { ascending: false })
+    if (uploadedBy) query = query.eq('uploaded_by', uploadedBy)
+    const { data, error } = await query
+    if (error) throw error
+    return data
+  },
+  async getSignedUrl(storagePath: string, expiresInSeconds = 3600) {
+    if (!isSupabaseEnabled || !supabase) throw new Error('Supabase required')
+    const { data, error } = await supabase.storage.from('user-files').createSignedUrl(storagePath, expiresInSeconds)
+    if (error) throw error
+    return data.signedUrl
+  },
+  async getRecoveryLogs(filters?: { practitioner_id?: string; assignment_id?: string }) {
+    if (!isSupabaseEnabled || !supabase) return mockAPI.getRecoveryLogs(filters?.practitioner_id)
+    let query = supabase.from('recovery_logs').select('*').order('date_logged', { ascending: false })
+    if (filters?.practitioner_id) query = query.eq('practitioner_id', filters.practitioner_id)
+    if (filters?.assignment_id) query = query.eq('assignment_id', filters.assignment_id)
+    const { data, error } = await query
+    if (error) throw error
+    return data
+  },
+  async addRecoveryLog(payload: {
+    assignment_id: string
+    practitioner_id: string
+    progress_notes: string
+    exercises?: string | null
+    pain_level?: number | null
+    mobility_score?: number | null
+    next_session_plan?: string | null
+  }) {
+    if (!isSupabaseEnabled || !supabase) throw new Error('Supabase required')
+    const { data, error } = await supabase.from('recovery_logs').insert(payload).select('*').single()
+    if (error) throw error
+    return data
+  },
 }
 
