@@ -22,6 +22,7 @@ export type Database = {
           profile_pic: string | null
           phone: string | null
           student_number: string | null
+          sport: string | null
           position: string | null
           dominant_side: string | null
           injury_history: any | null
@@ -38,6 +39,7 @@ export type Database = {
           profile_pic?: string | null
           phone?: string | null
           student_number?: string | null
+          sport?: string | null
           position?: string | null
           dominant_side?: string | null
           injury_history?: any | null
@@ -51,6 +53,7 @@ export type Database = {
           profile_pic?: string | null
           phone?: string | null
           student_number?: string | null
+          sport?: string | null
           position?: string | null
           dominant_side?: string | null
           injury_history?: any | null
@@ -101,7 +104,116 @@ export type Database = {
           pain_level?: number | null
         }
       }
-      , plan_templates: {
+      practitioner_assignments: {
+        Row: {
+          id: string
+          student_id: string
+          practitioner_id: string
+          injury_id: string
+          assigned_by: string | null
+          assigned_at: string
+          active: boolean
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          student_id: string
+          practitioner_id: string
+          injury_id: string
+          assigned_by?: string | null
+          active?: boolean
+          notes?: string | null
+        }
+        Update: {
+          active?: boolean
+          notes?: string | null
+        }
+      }
+      appointments: {
+        Row: {
+          id: string
+          student_id: string
+          practitioner_id: string
+          injury_id: string | null
+          appointment_date: string
+          duration_minutes: number
+          status: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          student_id: string
+          practitioner_id: string
+          injury_id?: string | null
+          appointment_date: string
+          duration_minutes?: number
+          status?: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+          notes?: string | null
+        }
+        Update: {
+          appointment_date?: string
+          duration_minutes?: number
+          status?: 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+          notes?: string | null
+        }
+      }
+      messages: {
+        Row: {
+          id: string
+          sender_id: string
+          recipient_id: string
+          injury_id: string | null
+          message: string
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          sender_id: string
+          recipient_id: string
+          injury_id?: string | null
+          message: string
+          read_at?: string | null
+        }
+        Update: {
+          read_at?: string | null
+        }
+      }
+      recovery_logs: {
+        Row: {
+          id: string
+          assignment_id: string
+          practitioner_id: string
+          log_date: string
+          pain_level: number | null
+          swelling_level: number | null
+          range_of_motion: number | null
+          treatment_notes: string | null
+          exercises_performed: string[] | null
+          next_appointment: string | null
+          created_at: string
+        }
+        Insert: {
+          assignment_id: string
+          practitioner_id: string
+          log_date?: string
+          pain_level?: number | null
+          swelling_level?: number | null
+          range_of_motion?: number | null
+          treatment_notes?: string | null
+          exercises_performed?: string[] | null
+          next_appointment?: string | null
+        }
+        Update: {
+          pain_level?: number | null
+          swelling_level?: number | null
+          range_of_motion?: number | null
+          treatment_notes?: string | null
+          exercises_performed?: string[] | null
+          next_appointment?: string | null
+        }
+      }
+      plan_templates: {
         Row: {
           id: string
           name: string
@@ -125,7 +237,7 @@ export type Database = {
           phases?: any
         }
       }
-      , treatment_plans: {
+      treatment_plans: {
         Row: {
           id: string
           assignment_id: string
@@ -145,7 +257,7 @@ export type Database = {
           phases?: any
         }
       }
-      , notification_preferences: {
+      notification_preferences: {
         Row: {
           id: string
           email_reminders: boolean
@@ -166,7 +278,7 @@ export type Database = {
           reminder_window_minutes?: number
         }
       }
-      , daily_checkins: {
+      daily_checkins: {
         Row: {
           id: string
           student_id: string
@@ -192,7 +304,7 @@ export type Database = {
           notes?: string | null
         }
       }
-      , rtp_checklists: {
+      rtp_checklists: {
         Row: {
           id: string
           student_id: string
@@ -218,7 +330,7 @@ export type Database = {
           cleared_at?: string | null
         }
       }
-      , session_notes: {
+      session_notes: {
         Row: {
           id: string
           assignment_id: string
