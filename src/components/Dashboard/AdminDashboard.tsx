@@ -24,6 +24,10 @@ export function AdminDashboard() {
   const [timeLossBySeverity, setTimeLossBySeverity] = useState<any[]>([])
   const [recurrenceRate, setRecurrenceRate] = useState(0)
   const [rtpTime, setRtpTime] = useState<number | null>(null)
+  const [filterStart, setFilterStart] = useState('')
+  const [filterEnd, setFilterEnd] = useState('')
+  const [filterSport, setFilterSport] = useState('all')
+  const [filterSeverity, setFilterSeverity] = useState('all')
 
   useEffect(() => {
     fetchDashboardData()
@@ -43,6 +47,22 @@ export function AdminDashboard() {
       const allInjuries = await api.getAllInjuries()
       const allRtp = await api.getAllRtpChecklists()
 
+      // Filters
+      const startDate = filterStart ? new Date(filterStart) : null
+      const endDate = filterEnd ? new Date(filterEnd) : null
+      const filteredInjuries = (injuries as any[]).filter((inj: any) => {
+        const d = new Date(inj.date_reported)
+        if (startDate && d < startDate) return false
+        if (endDate && d > endDate) return false
+        if (filterSeverity !== 'all' && inj.severity !== filterSeverity) return false
+        if (filterSport !== 'all') {
+          const s = (students as any[]).find((st: any) => st.id === inj.student_id)
+          const sport = s?.sport || 'Unknown'
+          if (sport !== filterSport) return false
+        }
+        return true
+      })
+
       const activeInjuries = injuries.filter(i => 
         ['reported', 'assigned', 'in_treatment', 'recovering'].includes(i.status)
       ).length
@@ -60,9 +80,9 @@ export function AdminDashboard() {
         recoveryRate
       })
 
-      // Process injury trends by month
+      // Process injury trends by month (filtered)
       const monthlyData: Record<string, number> = {}
-      ;(injuries as any[]).forEach((injury: any) => {
+      ;(filteredInjuries as any[]).forEach((injury: any) => {
         const d = new Date(injury.date_reported)
         const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
         monthlyData[key] = (monthlyData[key] || 0) + 1
@@ -74,9 +94,9 @@ export function AdminDashboard() {
 
       setInjuryTrends(trendsData)
 
-      // Process severity distribution
+      // Process severity distribution (filtered)
       const severityCount: Record<string, number> = {}
-      ;(injuries as any[]).forEach((injury: any) => {
+      ;(filteredInjuries as any[]).forEach((injury: any) => {
         const key = injury.severity as string
         severityCount[key] = (severityCount[key] || 0) + 1
       })
@@ -96,21 +116,30 @@ export function AdminDashboard() {
 
       setSeverityData(severityChartData)
 
-      // Incidence by sport (injuries per sport from profiles join approximation using students list)
+      // Incidence by sport (filtered)
       const sportMap: Record<string, number> = {}
-      ;(allInjuries as any[]).forEach((inj: any) => {
+      ;(filteredInjuries as any[]).forEach((inj: any) => {
         const s = students.find((st: any) => st.id === inj.student_id)
         const key = (s?.sport || 'Unknown') as string
         sportMap[key] = (sportMap[key] || 0) + 1
       })
       setIncidenceBySport(Object.entries(sportMap).map(([name, value]) => ({ name, value })))
 
-      // Time-loss proxy by severity: assume default durations for visualization
-      const lossDefaults: Record<string, number> = { mild: 7, moderate: 21, severe: 42, critical: 84 }
+      // Actual time-loss by severity using date_returned/days_lost when available
       const lossAgg: Record<string, number> = {}
-      ;(allInjuries as any[]).forEach((inj: any) => {
+      ;(filteredInjuries as any[]).forEach((inj: any) => {
+        let days = 0
+        if (typeof inj.days_lost === 'number') {
+          days = inj.days_lost
+        } else if (inj.date_returned) {
+          const from = new Date(inj.date_occurred || inj.date_reported)
+          const to = new Date(inj.date_returned)
+          days = Math.max(0, Math.round((to.getTime() - from.getTime()) / (1000*60*60*24)))
+        } else {
+          days = 0
+        }
         const sv = inj.severity || 'mild'
-        lossAgg[sv] = (lossAgg[sv] || 0) + (lossDefaults[sv] || 7)
+        lossAgg[sv] = (lossAgg[sv] || 0) + days
       })
       setTimeLossBySeverity(Object.entries(lossAgg).map(([name, value]) => ({ name, value })))
 
@@ -167,6 +196,43 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Start date</label>
+            <input type="date" className="w-full border rounded px-3 py-2" value={filterStart} onChange={(e) => setFilterStart(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">End date</label>
+            <input type="date" className="w-full border rounded px-3 py-2" value={filterEnd} onChange={(e) => setFilterEnd(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Sport</label>
+            <select className="w-full border rounded px-3 py-2" value={filterSport} onChange={(e) => setFilterSport(e.target.value)}>
+              <option value="all">All</option>
+              <option value="Rugby">Rugby</option>
+              <option value="Soccer">Soccer</option>
+              <option value="Athletics">Athletics</option>
+              <option value="Basketball">Basketball</option>
+              <option value="Swimming">Swimming</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">Severity</label>
+            <select className="w-full border rounded px-3 py-2" value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)}>
+              <option value="all">All</option>
+              <option value="mild">Mild</option>
+              <option value="moderate">Moderate</option>
+              <option value="severe">Severe</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex justify-end mt-3">
+          <button className="px-4 py-2 border rounded" onClick={fetchDashboardData}>Apply</button>
+        </div>
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
