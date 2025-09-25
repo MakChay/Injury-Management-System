@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom'
 import { Activity, Calendar, User, MessageSquare, FileText, Clock, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { mockAPI, type Injury } from '../../lib/mockData'
+import { api } from '../../lib/api'
 
 export function MyInjuriesPage() {
   const { user } = useAuth()
@@ -32,8 +33,12 @@ export function MyInjuriesPage() {
 
     try {
       setLoading(true)
-      const data = await mockAPI.getInjuries(user.id)
-      setInjuries(data.sort((a, b) => new Date(b.date_reported).getTime() - new Date(a.date_reported).getTime()))
+      const data = await api.getInjuries(user.id)
+      setInjuries(
+        (data as Injury[]).sort(
+          (a: Injury, b: Injury) => new Date(b.date_reported).getTime() - new Date(a.date_reported).getTime()
+        )
+      )
     } catch (error) {
       console.error('Error fetching injuries:', error)
     } finally {

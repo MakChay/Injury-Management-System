@@ -3,6 +3,7 @@ import { Users, Calendar, ClipboardList, TrendingUp, Clock, CheckCircle } from '
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { mockAPI, mockUsers, type Assignment, type Appointment, type User } from '../../lib/mockData'
+import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
 
 interface AssignmentWithDetails extends Assignment {
@@ -43,7 +44,7 @@ export function PractitionerDashboard() {
       setLoading(true)
       
       // Fetch assignments
-      const assignments = await mockAPI.getAssignments(user.id)
+      const assignments = await api.getAssignments(user.id)
       const activeAssignments = assignments.filter(a => a.active)
       
       // Enrich assignments with student and injury data
@@ -61,7 +62,7 @@ export function PractitionerDashboard() {
       })
       
       // Fetch appointments
-      const appointments = await mockAPI.getAppointments(user.id, 'practitioner')
+      const appointments = await api.getAppointments(user.id, 'practitioner')
       const today = new Date().toISOString().split('T')[0]
       const todayAppointments = appointments.filter(apt => 
         apt.appointment_date.startsWith(today)

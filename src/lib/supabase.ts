@@ -1,13 +1,14 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Vite env types can be unavailable to static analysis; cast import.meta
+const envMeta = (import.meta as any)?.env || {}
+const supabaseUrl: string | undefined = envMeta.VITE_SUPABASE_URL
+const supabaseAnonKey: string | undefined = envMeta.VITE_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
-}
+export const supabase: SupabaseClient | null =
+  supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const isSupabaseEnabled = Boolean(supabase)
 
 export type Database = {
   public: {

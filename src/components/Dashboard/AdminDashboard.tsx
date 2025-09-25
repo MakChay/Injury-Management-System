@@ -3,6 +3,7 @@ import { Users, Activity, TrendingUp, AlertTriangle, Calendar, UserPlus } from '
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { mockAPI, mockUsers, mockInjuries, mockAppointments } from '../../lib/mockData'
+import { api } from '../../lib/api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 
 export function AdminDashboard() {
@@ -27,11 +28,11 @@ export function AdminDashboard() {
       setLoading(true)
       
       // Fetch user statistics
-      const students = await mockAPI.getUsers('student')
-      const practitioners = await mockAPI.getUsers('practitioner')
-      const injuries = await mockAPI.getInjuries()
-      const assignments = await mockAPI.getAssignments()
-      const appointments = await mockAPI.getAppointments('', 'admin')
+      const students = await api.getUsers('student')
+      const practitioners = await api.getUsers('practitioner')
+      const injuries = await api.getInjuries()
+      const assignments = await api.getAssignments()
+      const appointments = await api.getAppointments('', 'admin' as any)
 
       const activeInjuries = injuries.filter(i => 
         ['reported', 'assigned', 'in_treatment', 'recovering'].includes(i.status)
@@ -51,7 +52,7 @@ export function AdminDashboard() {
       })
 
       // Process injury trends by month
-      const monthlyData = injuries.reduce((acc: any, injury) => {
+      const monthlyData = (injuries as any[]).reduce((acc: any, injury: any) => {
         const month = new Date(injury.date_reported).toLocaleString('default', { month: 'short' })
         acc[month] = (acc[month] || 0) + 1
         return acc
@@ -65,8 +66,8 @@ export function AdminDashboard() {
       setInjuryTrends(trendsData)
 
       // Process severity distribution
-      const severityCount = injuries.reduce((acc: any, injury) => {
-        acc[injury.severity] = (acc[injury.severity] || 0) + 1
+      const severityCount = (injuries as any[]).reduce((acc: any, injury: any) => {
+        acc[injury.severity as string] = (acc[injury.severity as string] || 0) + 1
         return acc
       }, {})
 
