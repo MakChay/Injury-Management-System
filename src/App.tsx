@@ -28,6 +28,7 @@ import { DailyCheckInPage } from './pages/Student/DailyCheckInPage'
 import { RTPChecklistPage } from './pages/Student/RTPChecklistPage'
 import { LearningHubPage } from './pages/Student/LearningHubPage'
 import { useReminders } from './hooks/useReminders'
+import { AnalyticsPage } from './pages/Admin/AnalyticsPage'
 
 function App() {
   const { user, loading } = useAuth()
@@ -252,10 +253,7 @@ function App() {
           element={
             <ProtectedRoute requiredRole="admin">
               <Layout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">Analytics</h1>
-                  <p className="text-gray-600">Feature coming soon...</p>
-                </div>
+                <AnalyticsPage />
               </Layout>
             </ProtectedRoute>
           }
