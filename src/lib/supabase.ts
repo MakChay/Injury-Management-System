@@ -86,6 +86,71 @@ export type Database = {
           pain_level?: number | null
         }
       }
+      , plan_templates: {
+        Row: {
+          id: string
+          name: string
+          injury_type: string
+          sport: string | null
+          phases: any
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          name: string
+          injury_type: string
+          sport?: string | null
+          phases: any
+          created_by?: string | null
+        }
+        Update: {
+          name?: string
+          injury_type?: string
+          sport?: string | null
+          phases?: any
+        }
+      }
+      , treatment_plans: {
+        Row: {
+          id: string
+          assignment_id: string
+          template_id: string | null
+          title: string
+          phases: any
+          created_at: string
+        }
+        Insert: {
+          assignment_id: string
+          template_id?: string | null
+          title: string
+          phases: any
+        }
+        Update: {
+          title?: string
+          phases?: any
+        }
+      }
+      , notification_preferences: {
+        Row: {
+          id: string
+          email_reminders: boolean
+          sms_reminders: boolean
+          reminder_window_minutes: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          email_reminders?: boolean
+          sms_reminders?: boolean
+          reminder_window_minutes?: number
+        }
+        Update: {
+          email_reminders?: boolean
+          sms_reminders?: boolean
+          reminder_window_minutes?: number
+        }
+      }
     }
   }
 }

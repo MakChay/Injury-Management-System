@@ -240,14 +240,37 @@ export const api = {
 
   async getPlanTemplates() {
     if (!isSupabaseEnabled || !supabase) return mockAPI.getPlanTemplates()
-    // Placeholder: expect a templates table in future
-    return mockAPI.getPlanTemplates()
+    const { data, error } = await supabase.from('plan_templates').select('*').order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
   },
 
   async createPlanFromTemplate(assignment_id: string, template_id: string, title?: string) {
     if (!isSupabaseEnabled || !supabase) return mockAPI.createPlanFromTemplate(assignment_id, template_id, title)
-    // Placeholder: insert into plans table
-    return mockAPI.createPlanFromTemplate(assignment_id, template_id, title)
+    const { data: template, error: tErr } = await supabase.from('plan_templates').select('*').eq('id', template_id).single()
+    if (tErr) throw tErr
+    const phases = template?.phases || []
+    const payload = { assignment_id, template_id, title: title || template?.name || 'Plan', phases }
+    const { data, error } = await supabase.from('treatment_plans').insert(payload).select('*').single()
+    if (error) throw error
+    return data
+  },
+
+  async getNotificationPreferences(userId: string) {
+    if (!isSupabaseEnabled || !supabase) {
+      return { id: userId, email_reminders: true, sms_reminders: false, reminder_window_minutes: 120 }
+    }
+    const { data, error } = await supabase.from('notification_preferences').select('*').eq('id', userId).single()
+    if (error && (error as any).code !== 'PGRST116') throw error
+    if (!data) return { id: userId, email_reminders: true, sms_reminders: false, reminder_window_minutes: 120 }
+    return data
+  },
+
+  async upsertNotificationPreferences(prefs: { id: string; email_reminders?: boolean; sms_reminders?: boolean; reminder_window_minutes?: number }) {
+    if (!isSupabaseEnabled || !supabase) return prefs
+    const { data, error } = await supabase.from('notification_preferences').upsert(prefs).select('*').single()
+    if (error) throw error
+    return data
   },
 }
 

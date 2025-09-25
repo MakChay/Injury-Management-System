@@ -12,14 +12,16 @@ export function useReminders() {
     const run = async () => {
       if (!user || !profile) return
       try {
+        const prefs = await api.getNotificationPreferences(user.id)
+        if (!prefs?.email_reminders) return
         const role = profile.role
         const appointments = await api.getAppointments(user.id, role)
         const now = Date.now()
-        const twoHours = 2 * 60 * 60 * 1000
+        const windowMs = (prefs.reminder_window_minutes || 120) * 60 * 1000
         appointments.forEach((apt: any) => {
           const when = new Date(apt.appointment_date).getTime()
           const soon = when - now
-          if (soon > 0 && soon <= twoHours && apt.status === 'scheduled') {
+          if (soon > 0 && soon <= windowMs && apt.status === 'scheduled') {
             if (!notifiedIdsRef.current.has(apt.id)) {
               notifiedIdsRef.current.add(apt.id)
               pushToast({ type: 'info', message: `Upcoming appointment at ${new Date(when).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` })

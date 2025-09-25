@@ -25,6 +25,18 @@ npm run dev
 
 The app runs in mock mode when `.env` is not set; with `.env` configured it uses Supabase.
 
+Supabase setup
+1. Create a Supabase project and set env vars in `.env`:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+2. In Supabase SQL editor, run `supabase/schema.sql` to create tables, policies, and the storage bucket.
+3. Auth email branding: Supabase Dashboard → Authentication → Email templates. Set logo/colors and customize Confirmation and Reset Password templates. Ensure Site URL points to your app domain and routes `/verify-email` and `/reset-password` exist.
+
+SMS reminders (optional)
+- Use a Supabase Edge Function (e.g., `send-sms`) with Twilio to send SMS. Store `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` as secrets.
+- Extend `notification_preferences` to enable SMS per user and read phone numbers from `profiles`.
+- Trigger via cron (every 5–10 min) to notify upcoming appointments for opted-in users.
+
 Database Schema & Policies
 Run the SQL in `supabase/schema.sql` in your Supabase SQL editor. It creates tables and RLS policies for students, practitioners, and admins.
 

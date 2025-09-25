@@ -266,3 +266,85 @@ create policy "storage update delete owner or admin" on storage.objects
     bucket_id = 'user-files' and (owner = auth.uid() or is_admin(auth.uid()))
   );
 
+
+-- Treatment plan templates
+create table if not exists plan_templates (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  injury_type text not null,
+  sport text,
+  phases jsonb not null,
+  created_by uuid references profiles(id),
+  created_at timestamptz not null default now()
+);
+
+alter table plan_templates enable row level security;
+
+create policy "templates readable by practitioners and admin" on plan_templates
+  for select using (
+    is_admin(auth.uid()) or exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('practitioner','admin'))
+  );
+
+create policy "templates insert by practitioner or admin" on plan_templates
+  for insert with check (
+    is_admin(auth.uid()) or exists (select 1 from profiles p where p.id = auth.uid() and p.role in ('practitioner','admin'))
+  );
+
+create policy "templates update by creator or admin" on plan_templates
+  for update using (
+    created_by = auth.uid() or is_admin(auth.uid())
+  );
+
+-- Treatment plans bound to assignments
+create table if not exists treatment_plans (
+  id uuid primary key default gen_random_uuid(),
+  assignment_id uuid not null references practitioner_assignments(id) on delete cascade,
+  template_id uuid references plan_templates(id) on delete set null,
+  title text not null,
+  phases jsonb not null,
+  created_at timestamptz not null default now()
+);
+
+alter table treatment_plans enable row level security;
+
+create policy "plans readable by related or admin" on treatment_plans
+  for select using (
+    is_admin(auth.uid()) or exists (
+      select 1 from practitioner_assignments pa
+      where pa.id = treatment_plans.assignment_id
+        and (pa.student_id = auth.uid() or pa.practitioner_id = auth.uid())
+    )
+  );
+
+create policy "plans insert by practitioner assigned or admin" on treatment_plans
+  for insert with check (
+    is_admin(auth.uid()) or exists (
+      select 1 from practitioner_assignments pa
+      where pa.id = assignment_id and pa.practitioner_id = auth.uid() and pa.active = true
+    )
+  );
+
+-- Notification preferences per user
+create table if not exists notification_preferences (
+  id uuid primary key references profiles(id) on delete cascade,
+  email_reminders boolean not null default true,
+  sms_reminders boolean not null default false,
+  reminder_window_minutes int not null default 120,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table notification_preferences enable row level security;
+
+create policy "prefs read own or admin" on notification_preferences
+  for select using (
+    id = auth.uid() or is_admin(auth.uid())
+  );
+
+create policy "prefs upsert own or admin" on notification_preferences
+  for all using (
+    id = auth.uid() or is_admin(auth.uid())
+  ) with check (
+    id = auth.uid() or is_admin(auth.uid())
+  );
+
