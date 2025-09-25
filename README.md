@@ -42,6 +42,7 @@ npx playwright install
 ```
 npm run test:e2e
 ```
+Notes: tests assume mock mode is active (no Supabase env) for default user.
 
 - Use a Supabase Edge Function (e.g., `send-sms`) with Twilio to send SMS. Store `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` as secrets.
 - Extend `notification_preferences` to enable SMS per user and read phone numbers from `profiles`.
