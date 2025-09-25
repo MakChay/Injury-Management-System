@@ -14,6 +14,10 @@ import { MessagesPage } from './pages/Shared/MessagesPage'
 import { FilesPage } from './pages/Shared/FilesPage'
 import { RecoveryLogsPage } from './pages/Practitioner/RecoveryLogsPage'
 import { AssignPractitionersPage } from './pages/Admin/AssignPractitionersPage'
+import { LogoutPage } from './pages/Auth/LogoutPage'
+//
+import { TreatmentPlansPage } from './pages/Practitioner/TreatmentPlansPage'
+import { ProfilePage } from './pages/Settings/ProfilePage'
 
 function App() {
   const { user, loading } = useAuth()
@@ -44,6 +48,8 @@ function App() {
           path="/register"
           element={user ? <Navigate to="/dashboard" replace /> : <RegisterPage />}
         />
+
+        <Route path="/logout" element={<LogoutPage />} />
 
         {/* Protected routes */}
         <Route
@@ -179,10 +185,18 @@ function App() {
           element={
             <ProtectedRoute>
               <Layout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">Settings</h1>
-                  <p className="text-gray-600">Feature coming soon...</p>
-                </div>
+                <ProfilePage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/treatment-plans"
+          element={
+            <ProtectedRoute requiredRole="practitioner">
+              <Layout>
+                <TreatmentPlansPage />
               </Layout>
             </ProtectedRoute>
           }

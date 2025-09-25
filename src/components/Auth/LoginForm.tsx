@@ -45,11 +45,7 @@ export function LoginForm() {
         </motion.div>
       )}
 
-      <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
-        <p className="font-medium mb-1">Demo Credentials:</p>
-        <p>Email: any email • Password: any password</p>
-        <p className="text-xs mt-1">Change role in mockData.ts to test different user types</p>
-      </div>
+      
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">

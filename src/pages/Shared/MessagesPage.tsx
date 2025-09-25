@@ -42,8 +42,17 @@ export function MessagesPage() {
   const send = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !text || !receiverId) return
-    await api.sendMessage({ sender_id: user.id, receiver_id: receiverId, message: text })
-    setText('')
+    try {
+      await api.sendMessage({ sender_id: user.id, receiver_id: receiverId, message: text })
+      setText('')
+      // @ts-ignore
+      const { pushToast } = await import('../../components/Toaster')
+      pushToast({ type: 'success', message: 'Message sent' })
+    } catch (e) {
+      // @ts-ignore
+      const { pushToast } = await import('../../components/Toaster')
+      pushToast({ type: 'error', message: 'Failed to send message' })
+    }
   }
 
   return (
@@ -87,6 +96,9 @@ export function MessagesPage() {
           {[...messages].reverse().map((m) => (
             <div key={m.id} className={`flex ${m.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
               <div className={`px-3 py-2 rounded-lg ${m.sender_id === user?.id ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
+                <div className="text-xs opacity-75 mb-1">
+                  {m.sender_profile?.full_name || m.sender_id.slice(0,8)} → {m.receiver_profile?.full_name || m.receiver_id.slice(0,8)}
+                </div>
                 <div className="text-sm">{m.message}</div>
                 <div className="text-[10px] opacity-70 mt-1">{new Date(m.sent_at).toLocaleString()}</div>
               </div>

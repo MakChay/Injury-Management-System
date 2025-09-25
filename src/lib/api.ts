@@ -7,7 +7,10 @@ export const api = {
     const query = supabase.from('injuries').select('*').order('date_reported', { ascending: false })
     const { data, error } = studentId ? await query.eq('student_id', studentId) : await query
     if (error) throw error
-    return data
+    const ids = Array.from(new Set((data || []).map((i: any) => i.student_id)))
+    const { data: students } = await supabase.from('profiles').select('id, full_name, sport').in('id', ids)
+    const map = new Map((students || []).map((s: any) => [s.id, s]))
+    return (data || []).map((i: any) => ({ ...i, student_profile: map.get(i.student_id) || null }))
   },
 
   async createInjury(injuryData: any) {
@@ -17,6 +20,20 @@ export const api = {
     return data
   },
 
+  async getInjuriesByIds(ids: string[]) {
+    if (!isSupabaseEnabled || !supabase) {
+      // Fallback: filter mock by ids
+      const all = await mockAPI.getInjuries()
+      return all.filter((i: any) => ids.includes(i.id))
+    }
+    const { data, error } = await supabase.from('injuries').select('*').in('id', ids)
+    if (error) throw error
+    const studentIds = Array.from(new Set((data || []).map((i: any) => i.student_id)))
+    const { data: students } = await supabase.from('profiles').select('id, full_name, sport').in('id', studentIds)
+    const map = new Map((students || []).map((s: any) => [s.id, s]))
+    return (data || []).map((i: any) => ({ ...i, student_profile: map.get(i.student_id) || null }))
+  },
+
   async getAssignments(practitionerId?: string, studentId?: string) {
     if (!isSupabaseEnabled || !supabase) return mockAPI.getAssignments(practitionerId, studentId)
     let query = supabase.from('practitioner_assignments').select('*')
@@ -24,7 +41,15 @@ export const api = {
     if (studentId) query = query.eq('student_id', studentId)
     const { data, error } = await query
     if (error) throw error
-    return data
+    const ids = new Set<string>()
+    data?.forEach((a: any) => { ids.add(a.student_id); ids.add(a.practitioner_id) })
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name, email').in('id', Array.from(ids))
+    const map = new Map((profiles || []).map((p: any) => [p.id, p]))
+    return (data || []).map((a: any) => ({
+      ...a,
+      student_profile: map.get(a.student_id) || null,
+      practitioner_profile: map.get(a.practitioner_id) || null,
+    }))
   },
 
   async updateInjuryStatus(injuryId: string, status: string) {
@@ -46,7 +71,18 @@ export const api = {
     if (role === 'practitioner') query = query.eq('practitioner_id', userId)
     const { data, error } = await query
     if (error) throw error
-    return data
+    const ids = new Set<string>()
+    data?.forEach((row: any) => {
+      if (row.student_id) ids.add(row.student_id)
+      if (row.practitioner_id) ids.add(row.practitioner_id)
+    })
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name, email').in('id', Array.from(ids))
+    const map = new Map((profiles || []).map((p: any) => [p.id, p]))
+    return (data || []).map((row: any) => ({
+      ...row,
+      student_profile: map.get(row.student_id) || null,
+      practitioner_profile: map.get(row.practitioner_id) || null,
+    }))
   },
 
   async getMessages(userId: string) {
@@ -57,7 +93,15 @@ export const api = {
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
       .order('sent_at', { ascending: false })
     if (error) throw error
-    return data
+    const ids = new Set<string>()
+    data?.forEach((m: any) => { ids.add(m.sender_id); ids.add(m.receiver_id) })
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name, role').in('id', Array.from(ids))
+    const map = new Map((profiles || []).map((p: any) => [p.id, p]))
+    return (data || []).map((m: any) => ({
+      ...m,
+      sender_profile: map.get(m.sender_id) || null,
+      receiver_profile: map.get(m.receiver_id) || null,
+    }))
   },
 
   async getUsers(role?: string) {
@@ -125,7 +169,8 @@ export const api = {
 
   onMessageRealtime(userId: string, cb: (payload: any) => void) {
     if (!isSupabaseEnabled || !supabase) return () => {}
-    const channel = supabase
+    const client = supabase
+    const channel = client
       .channel('messages-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const row = payload.new as any
@@ -133,8 +178,35 @@ export const api = {
       })
       .subscribe()
     return () => {
-      supabase.removeChannel(channel)
+      client.removeChannel(channel)
     }
+  },
+  async getRecoveryLogs(filters?: { practitioner_id?: string; assignment_id?: string }) {
+    if (!isSupabaseEnabled || !supabase) return mockAPI.getRecoveryLogs(filters?.practitioner_id)
+    let query = supabase.from('recovery_logs').select('*').order('date_logged', { ascending: false })
+    if (filters?.practitioner_id) query = query.eq('practitioner_id', filters.practitioner_id)
+    if (filters?.assignment_id) query = query.eq('assignment_id', filters.assignment_id)
+    const { data, error } = await query
+    if (error) throw error
+    const assignmentIds = Array.from(new Set((data || []).map((l: any) => l.assignment_id)))
+    const practitionerIds = Array.from(new Set((data || []).map((l: any) => l.practitioner_id)))
+    const [{ data: assignments }, { data: practitioners }] = await Promise.all([
+      supabase.from('practitioner_assignments').select('*').in('id', assignmentIds),
+      supabase.from('profiles').select('id, full_name').in('id', practitionerIds),
+    ])
+    const assignmentMap = new Map((assignments || []).map((a: any) => [a.id, a]))
+    const practitionerMap = new Map((practitioners || []).map((p: any) => [p.id, p]))
+    const studentIds = Array.from(new Set((assignments || []).map((a: any) => a.student_id)))
+    const { data: students } = await supabase.from('profiles').select('id, full_name').in('id', studentIds)
+    const studentMap = new Map((students || []).map((s: any) => [s.id, s]))
+    return (data || []).map((l: any) => ({
+      ...l,
+      practitioner_profile: practitionerMap.get(l.practitioner_id) || null,
+      assignment: assignmentMap.get(l.assignment_id) || null,
+      assignment_student_profile: assignmentMap.get(l.assignment_id)
+        ? studentMap.get(assignmentMap.get(l.assignment_id).student_id)
+        : null,
+    }))
   },
   async getFiles(uploadedBy?: string) {
     if (!isSupabaseEnabled || !supabase) throw new Error('Supabase required')
@@ -150,15 +222,7 @@ export const api = {
     if (error) throw error
     return data.signedUrl
   },
-  async getRecoveryLogs(filters?: { practitioner_id?: string; assignment_id?: string }) {
-    if (!isSupabaseEnabled || !supabase) return mockAPI.getRecoveryLogs(filters?.practitioner_id)
-    let query = supabase.from('recovery_logs').select('*').order('date_logged', { ascending: false })
-    if (filters?.practitioner_id) query = query.eq('practitioner_id', filters.practitioner_id)
-    if (filters?.assignment_id) query = query.eq('assignment_id', filters.assignment_id)
-    const { data, error } = await query
-    if (error) throw error
-    return data
-  },
+  // duplicate removed: using enriched getRecoveryLogs above
   async addRecoveryLog(payload: {
     assignment_id: string
     practitioner_id: string

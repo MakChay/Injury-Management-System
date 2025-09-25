@@ -67,6 +67,10 @@ export function AppointmentsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
+    if (isStudent && !form.practitioner_id) {
+      alert('Please select a practitioner')
+      return
+    }
     const payload = {
       student_id: isStudent ? user.id : form.practitioner_id,
       practitioner_id: isStudent ? form.practitioner_id : user.id,
@@ -75,7 +79,16 @@ export function AppointmentsPage() {
       location: form.location || null,
       notes: form.notes || null,
     }
-    await api.createAppointment(payload)
+    try {
+      await api.createAppointment(payload)
+      // @ts-ignore
+      const { pushToast } = await import('../../components/Toaster')
+      pushToast({ type: 'success', message: 'Appointment created' })
+    } catch (e) {
+      // @ts-ignore
+      const { pushToast } = await import('../../components/Toaster')
+      pushToast({ type: 'error', message: 'Failed to create appointment' })
+    }
     setShowForm(false)
     await fetchAppointments()
   }
@@ -212,13 +225,13 @@ export function AppointmentsPage() {
                     {isStudent && (
                       <>
                         <span>•</span>
-                        <span>With Practitioner: {practitioners.find(p => p.id === apt.practitioner_id)?.full_name || apt.practitioner_id}</span>
+                        <span>With Practitioner: {apt.practitioner_profile?.full_name || apt.practitioner_id}</span>
                       </>
                     )}
                     {isPractitioner && (
                       <>
                         <span>•</span>
-                        <span>With Student: {assignedStudents.find(s => s.id === apt.student_id)?.full_name || apt.student_id}</span>
+                        <span>With Student: {apt.student_profile?.full_name || apt.student_id}</span>
                       </>
                     )}
                     {apt.location && (

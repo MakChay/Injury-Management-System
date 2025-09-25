@@ -151,6 +151,7 @@ export function useAuth() {
           role: userData.role,
           phone: userData.phone || null,
           student_number: userData.studentNumber || null,
+          sport: userData.sport || null,
           specialization: userData.specialization || null,
         })
         if (upsertError) return { error: upsertError }
@@ -161,6 +162,7 @@ export function useAuth() {
           role: userData.role,
           phone: userData.phone,
           student_number: userData.studentNumber,
+          sport: userData.sport,
           specialization: userData.specialization,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -208,5 +210,6 @@ export function useAuth() {
     isAdmin: profile?.role === 'admin',
     isPractitioner: profile?.role === 'practitioner',
     isStudent: profile?.role === 'student',
+    setProfile,
   }
 }

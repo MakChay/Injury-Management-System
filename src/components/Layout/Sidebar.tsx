@@ -98,6 +98,9 @@ export function Sidebar() {
             <Settings className="w-5 h-5" />
             <span className="font-medium">Settings</span>
           </NavLink>
+          <div className="mt-2 text-xs text-gray-500 px-4">
+            <span>Edit profile</span>
+          </div>
         </div>
       </nav>
 

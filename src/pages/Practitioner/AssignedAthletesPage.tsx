@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Search, Filter, Calendar, MessageSquare, Activity, Clock, User } from 'lucide-react'
+import { Users, Search, Filter, Calendar, MessageSquare, Activity } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import { mockAPI, mockUsers, type Assignment, type User as UserType } from '../../lib/mockData'
 import { api } from '../../lib/api'
 
-interface AssignmentWithDetails extends Assignment {
-  student?: UserType
-  injury?: {
-    injury_type: string
-    severity: string
-    body_part: string
-    status: string
-    date_occurred: string
-  }
+interface AssignmentWithDetails {
+  id: string
+  student_id: string
+  practitioner_id: string
+  injury_id: string
+  assigned_at: string
+  active: boolean
+  notes?: string
+  student?: any
+  injury?: any
 }
 
 export function AssignedAthletesPage() {
@@ -41,23 +41,14 @@ export function AssignedAthletesPage() {
     try {
       setLoading(true)
       const data = await api.getAssignments(user.id)
-      
-      // Enrich assignments with student and injury data
-      const enrichedAssignments: AssignmentWithDetails[] = data.map(assignment => {
-        const student = mockUsers.find(u => u.id === assignment.student_id)
-        return {
-          ...assignment,
-          student,
-          injury: {
-            injury_type: 'Ankle Sprain', // Mock data - would come from injury table
-            severity: 'moderate',
-            body_part: 'Left Ankle',
-            status: 'in_treatment',
-            date_occurred: '2024-01-20'
-          }
-        }
-      })
-      
+      const injuryIds = Array.from(new Set(data.map((a: any) => a.injury_id)))
+      const injuries = await api.getInjuriesByIds(injuryIds)
+      const injuryMap = new Map((injuries as any[]).map((i: any) => [i.id, i]))
+      const enrichedAssignments: AssignmentWithDetails[] = data.map((assignment: any) => ({
+        ...assignment,
+        student: assignment.student_profile,
+        injury: injuryMap.get(assignment.injury_id) || undefined,
+      }))
       setAssignments(enrichedAssignments)
     } catch (error) {
       console.error('Error fetching assignments:', error)
@@ -72,13 +63,13 @@ export function AssignedAthletesPage() {
     if (searchTerm) {
       filtered = filtered.filter(assignment =>
         assignment.student?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        assignment.injury?.injury_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        assignment.injury?.body_part.toLowerCase().includes(searchTerm.toLowerCase())
+        (assignment.injury?.injury_type || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (assignment.injury?.body_part || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(assignment => assignment.injury?.status === statusFilter)
+      filtered = filtered.filter(assignment => (assignment.injury?.status || '') === statusFilter)
     }
 
     setFilteredAssignments(filtered)
@@ -194,14 +185,10 @@ export function AssignedAthletesPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex items-start space-x-4">
                           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <User className="w-6 h-6 text-blue-600" />
+                            <Users className="w-6 h-6 text-blue-600" />
                           </div>
                           <div className="flex-1">
                             <h3 className="font-medium text-gray-900">{assignment.student?.full_name}</h3>
-                            <p className="text-sm text-gray-600">{assignment.student?.email}</p>
-                            {assignment.student?.student_number && (
-                              <p className="text-xs text-gray-500">Student #: {assignment.student.student_number}</p>
-                            )}
                             <div className="flex items-center space-x-2 mt-2">
                               <span className="text-sm font-medium text-gray-700">{assignment.injury?.injury_type}</span>
                               <span className="text-sm text-gray-500">•</span>
@@ -214,7 +201,7 @@ export function AssignedAthletesPage() {
                             {assignment.injury?.severity}
                           </span>
                           <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(assignment.injury?.status || 'assigned')}`}>
-                            {assignment.injury?.status.replace('_', ' ')}
+                            {(assignment.injury?.status || 'assigned').replace('_', ' ')}
                           </span>
                           <p className="text-xs text-gray-500">
                             Assigned: {new Date(assignment.assigned_at).toLocaleDateString()}
@@ -257,13 +244,9 @@ export function AssignedAthletesPage() {
                   {/* Athlete Info */}
                   <div className="text-center">
                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <User className="w-8 h-8 text-blue-600" />
+                      <Users className="w-8 h-8 text-blue-600" />
                     </div>
                     <h3 className="font-medium text-gray-900">{selectedAthlete.student?.full_name}</h3>
-                    <p className="text-sm text-gray-600">{selectedAthlete.student?.email}</p>
-                    {selectedAthlete.student?.phone && (
-                      <p className="text-sm text-gray-600">{selectedAthlete.student.phone}</p>
-                    )}
                   </div>
 
                   {/* Injury Details */}
@@ -287,58 +270,27 @@ export function AssignedAthletesPage() {
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-500">Status:</span>
                         <span className={`text-xs font-medium px-2 py-1 rounded-full border ${getStatusColor(selectedAthlete.injury?.status || 'assigned')}`}>
-                          {selectedAthlete.injury?.status.replace('_', ' ')}
+                          {(selectedAthlete.injury?.status || 'assigned').replace('_', ' ')}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Date Occurred:</span>
-                        <span className="text-sm font-medium">
-                          {selectedAthlete.injury?.date_occurred ? new Date(selectedAthlete.injury.date_occurred).toLocaleDateString() : 'N/A'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Assignment Info */}
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900">Assignment Details</h4>
-                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Assigned:</span>
-                        <span className="text-sm font-medium">
-                          {new Date(selectedAthlete.assigned_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-500">Status:</span>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${selectedAthlete.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                          {selectedAthlete.active ? 'Active' : 'Inactive'}
-                        </span>
-                      </div>
-                      {selectedAthlete.notes && (
-                        <div>
-                          <span className="text-sm text-gray-500">Notes:</span>
-                          <p className="text-sm text-gray-700 mt-1">{selectedAthlete.notes}</p>
-                        </div>
-                      )}
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div className="space-y-3">
-                    <button className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <a className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" href="/recovery-logs">
                       <Activity className="w-4 h-4" />
                       <span>Add Recovery Log</span>
-                    </button>
+                    </a>
                     <div className="grid grid-cols-2 gap-3">
-                      <button className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors">
+                      <a className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors" href="/appointments">
                         <Calendar className="w-4 h-4" />
                         <span className="text-sm">Schedule</span>
-                      </button>
-                      <button className="flex items-center justify-center space-x-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">
+                      </a>
+                      <a className="flex items-center justify-center space-x-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors" href="/messages">
                         <MessageSquare className="w-4 h-4" />
                         <span className="text-sm">Message</span>
-                      </button>
+                      </a>
                     </div>
                   </div>
                 </div>
