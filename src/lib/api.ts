@@ -20,6 +20,20 @@ export const api = {
     return data
   },
 
+  async getInjuriesByIds(ids: string[]) {
+    if (!isSupabaseEnabled || !supabase) {
+      // Fallback: filter mock by ids
+      const all = await mockAPI.getInjuries()
+      return all.filter((i: any) => ids.includes(i.id))
+    }
+    const { data, error } = await supabase.from('injuries').select('*').in('id', ids)
+    if (error) throw error
+    const studentIds = Array.from(new Set((data || []).map((i: any) => i.student_id)))
+    const { data: students } = await supabase.from('profiles').select('id, full_name, sport').in('id', studentIds)
+    const map = new Map((students || []).map((s: any) => [s.id, s]))
+    return (data || []).map((i: any) => ({ ...i, student_profile: map.get(i.student_id) || null }))
+  },
+
   async getAssignments(practitionerId?: string, studentId?: string) {
     if (!isSupabaseEnabled || !supabase) return mockAPI.getAssignments(practitionerId, studentId)
     let query = supabase.from('practitioner_assignments').select('*')
@@ -27,7 +41,15 @@ export const api = {
     if (studentId) query = query.eq('student_id', studentId)
     const { data, error } = await query
     if (error) throw error
-    return data
+    const ids = new Set<string>()
+    data?.forEach((a: any) => { ids.add(a.student_id); ids.add(a.practitioner_id) })
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name, email').in('id', Array.from(ids))
+    const map = new Map((profiles || []).map((p: any) => [p.id, p]))
+    return (data || []).map((a: any) => ({
+      ...a,
+      student_profile: map.get(a.student_id) || null,
+      practitioner_profile: map.get(a.practitioner_id) || null,
+    }))
   },
 
   async updateInjuryStatus(injuryId: string, status: string) {
@@ -147,7 +169,8 @@ export const api = {
 
   onMessageRealtime(userId: string, cb: (payload: any) => void) {
     if (!isSupabaseEnabled || !supabase) return () => {}
-    const channel = supabase
+    const client = supabase
+    const channel = client
       .channel('messages-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const row = payload.new as any
@@ -155,25 +178,8 @@ export const api = {
       })
       .subscribe()
     return () => {
-      supabase.removeChannel(channel)
+      client.removeChannel(channel)
     }
-  },
-  async getAssignments(practitionerId?: string, studentId?: string) {
-    if (!isSupabaseEnabled || !supabase) return mockAPI.getAssignments(practitionerId, studentId)
-    let query = supabase.from('practitioner_assignments').select('*')
-    if (practitionerId) query = query.eq('practitioner_id', practitionerId)
-    if (studentId) query = query.eq('student_id', studentId)
-    const { data, error } = await query
-    if (error) throw error
-    const ids = new Set<string>()
-    data?.forEach((a: any) => { ids.add(a.student_id); ids.add(a.practitioner_id) })
-    const { data: profiles } = await supabase.from('profiles').select('id, full_name, email').in('id', Array.from(ids))
-    const map = new Map((profiles || []).map((p: any) => [p.id, p]))
-    return (data || []).map((a: any) => ({
-      ...a,
-      student_profile: map.get(a.student_id) || null,
-      practitioner_profile: map.get(a.practitioner_id) || null,
-    }))
   },
   async getRecoveryLogs(filters?: { practitioner_id?: string; assignment_id?: string }) {
     if (!isSupabaseEnabled || !supabase) return mockAPI.getRecoveryLogs(filters?.practitioner_id)
@@ -216,15 +222,7 @@ export const api = {
     if (error) throw error
     return data.signedUrl
   },
-  async getRecoveryLogs(filters?: { practitioner_id?: string; assignment_id?: string }) {
-    if (!isSupabaseEnabled || !supabase) return mockAPI.getRecoveryLogs(filters?.practitioner_id)
-    let query = supabase.from('recovery_logs').select('*').order('date_logged', { ascending: false })
-    if (filters?.practitioner_id) query = query.eq('practitioner_id', filters.practitioner_id)
-    if (filters?.assignment_id) query = query.eq('assignment_id', filters.assignment_id)
-    const { data, error } = await query
-    if (error) throw error
-    return data
-  },
+  // duplicate removed: using enriched getRecoveryLogs above
   async addRecoveryLog(payload: {
     assignment_id: string
     practitioner_id: string

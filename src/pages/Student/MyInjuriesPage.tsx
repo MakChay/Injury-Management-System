@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import { Activity, Calendar, User, MessageSquare, FileText, Clock, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import { mockAPI, type Injury } from '../../lib/mockData'
+import { type Injury } from '../../lib/mockData'
 import { api } from '../../lib/api'
 
 export function MyInjuriesPage() {
