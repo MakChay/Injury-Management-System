@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { logger } from '../../lib/logger'
 import { motion } from 'framer-motion'
 import { Activity, Calendar, CheckCircle, Clock, Play } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -74,7 +75,7 @@ export function RecoveryPlansPage() {
       ]
       setPlans(mockPlans)
     } catch (error) {
-      console.error('Error fetching recovery plans:', error)
+      logger.error('Error fetching recovery plans:', error as Error)
     } finally {
       setLoading(false)
     }

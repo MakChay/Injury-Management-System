@@ -1,11 +1,22 @@
 import { useState, useEffect } from 'react'
 import { mockAuth, type User } from '../lib/mockData'
 import { supabase, isSupabaseEnabled } from '../lib/supabase'
+import { logger } from '../lib/logger'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Development mode: Force no user to show register page first
+  // Remove this in production or set via environment variable
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && process.env.VITE_FORCE_REGISTER_FIRST === 'true' && user) {
+      logger.debug('Development mode: Forcing register page first')
+      setUser(null)
+      setProfile(null)
+    }
+  }, [user])
 
   useEffect(() => {
     const initAuth = async () => {
@@ -74,11 +85,16 @@ export function useAuth() {
           // Demo: use mock user
           await new Promise(resolve => setTimeout(resolve, 300))
           const currentUser = mockAuth.getCurrentUser()
-          setUser(currentUser)
-          setProfile(currentUser)
+          if (currentUser) {
+            setUser(currentUser)
+            setProfile(currentUser)
+          } else {
+            setUser(null)
+            setProfile(null)
+          }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error)
+        logger.error('Auth initialization error:', error as Error)
       } finally {
         setLoading(false)
       }
@@ -122,8 +138,10 @@ export function useAuth() {
         if (mockError) {
           return { error: mockError }
         }
-        setUser(user)
-        setProfile(user)
+        if (user) {
+          setUser(user)
+          setProfile(user)
+        }
         return { error: null }
       }
     } catch (error: unknown) {
@@ -179,8 +197,10 @@ export function useAuth() {
         if (mockError) {
           return { error: mockError }
         }
-        setUser(user)
-        setProfile(user)
+        if (user) {
+          setUser(user)
+          setProfile(user)
+        }
         return { error: null }
       }
     } catch (error: any) {
@@ -234,10 +254,11 @@ export function useAuth() {
       } else {
         await mockAuth.signOut()
       }
+    } catch (error) {
+      logger.error('Sign out error:', error as Error)
+    } finally {
       setUser(null)
       setProfile(null)
-    } catch (error) {
-      console.error('Sign out error:', error)
     }
   }
 

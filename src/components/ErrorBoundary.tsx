@@ -1,5 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { logger } from '../lib/logger'
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
+import { RetryButton } from './RetryButton'
 
 interface Props {
   children: ReactNode
@@ -10,25 +12,35 @@ interface State {
   hasError: boolean
   error?: Error
   errorInfo?: ErrorInfo
+  retryCount: number
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
-    this.state = { hasError: false }
+    this.state = { hasError: false, retryCount: 0 }
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
+    return { hasError: true, error, retryCount: 0 }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo)
+    logger.error('ErrorBoundary caught an error:', error, errorInfo)
     this.setState({ error, errorInfo })
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined })
+    this.setState(prevState => ({
+      hasError: false,
+      error: undefined,
+      errorInfo: undefined,
+      retryCount: prevState.retryCount + 1
+    }))
+  }
+
+  handleGoHome = () => {
+    window.location.href = '/'
   }
 
   render() {
@@ -64,22 +76,36 @@ export class ErrorBoundary extends Component<Props, State> {
               </details>
             )}
 
-            <div className="flex space-x-3">
+            <div className="space-y-3">
+              <RetryButton
+                onRetry={this.handleRetry}
+                canRetry={this.state.retryCount < 3}
+                isRetrying={false}
+                error={this.state.error}
+                className="w-full"
+              />
+              
               <button
-                onClick={this.handleRetry}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                onClick={this.handleGoHome}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center justify-center space-x-2"
               >
-                <RefreshCw className="w-4 h-4" />
-                <span>Try Again</span>
+                <Home className="w-4 h-4" />
+                <span>Go Home</span>
               </button>
               
               <button
                 onClick={() => window.location.reload()}
-                className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
               >
                 Refresh Page
               </button>
             </div>
+
+            {this.state.retryCount > 0 && (
+              <p className="text-xs text-gray-500 mt-4">
+                Retry attempts: {this.state.retryCount}/3
+              </p>
+            )}
           </div>
         </div>
       )

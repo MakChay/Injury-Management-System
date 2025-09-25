@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Plus, Activity, Calendar, MessageSquare, AlertTriangle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { logger } from '../../lib/logger'
 import { type Injury } from '../../lib/mockData'
 import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
@@ -56,7 +57,7 @@ export function StudentDashboard() {
       
       setRecentInjuries(injuries.slice(0, 3))
     } catch (error) {
-      console.error('Error fetching dashboard data:', error)
+      logger.error('Error fetching dashboard data:', error as Error)
     } finally {
       setLoading(false)
     }

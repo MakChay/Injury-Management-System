@@ -1,6 +1,7 @@
 import { mockAPI } from './mockData'
 import { supabase, isSupabaseEnabled } from './supabase'
 import { type Injury, type Assignment, type Appointment, type Message, type RecoveryLog, type User, type TreatmentPlanTemplate, type TreatmentPlanInstance } from './mockData'
+import { logger } from './logger'
 
 class APIClient {
   // Injuries
@@ -17,7 +18,7 @@ class APIClient {
         if (error) throw error
         return data || []
       } catch (error) {
-        console.error('Error fetching injuries:', error)
+        logger.error('Error fetching injuries:', error as Error)
         throw error
       }
     } else {
@@ -40,7 +41,7 @@ class APIClient {
         if (error) throw error
         return data
       } catch (error) {
-        console.error('Error creating injury:', error)
+        logger.error('Error creating injury:', error as Error)
         throw error
       }
     } else {
@@ -65,7 +66,7 @@ class APIClient {
         if (error) throw error
         return data || []
       } catch (error) {
-        console.error('Error fetching assignments:', error)
+        logger.error('Error fetching assignments:', error as Error)
         throw error
       }
     } else {
@@ -89,7 +90,7 @@ class APIClient {
         if (error) throw error
         return data || []
       } catch (error) {
-        console.error('Error fetching appointments:', error)
+        logger.error('Error fetching appointments:', error as Error)
         throw error
       }
     } else {
@@ -109,7 +110,7 @@ class APIClient {
         if (error) throw error
         return data
       } catch (error) {
-        console.error('Error creating appointment:', error)
+        logger.error('Error creating appointment:', error as Error)
         throw error
       }
     } else {
@@ -137,7 +138,7 @@ class APIClient {
         if (error) throw error
         return data || []
       } catch (error) {
-        console.error('Error fetching messages:', error)
+        logger.error('Error fetching messages:', error as Error)
         throw error
       }
     } else {
@@ -160,7 +161,7 @@ class APIClient {
         if (error) throw error
         return data
       } catch (error) {
-        console.error('Error sending message:', error)
+        logger.error('Error sending message:', error as Error)
         throw error
       }
     } else {
@@ -188,7 +189,7 @@ class APIClient {
         if (error) throw error
         return data || []
       } catch (error) {
-        console.error('Error fetching recovery logs:', error)
+        logger.error('Error fetching recovery logs:', error as Error)
         throw error
       }
     } else {
@@ -211,7 +212,7 @@ class APIClient {
         if (error) throw error
         return data
       } catch (error) {
-        console.error('Error creating recovery log:', error)
+        logger.error('Error creating recovery log:', error as Error)
         throw error
       }
     } else {
@@ -239,7 +240,7 @@ class APIClient {
         if (error) throw error
         return data || []
       } catch (error) {
-        console.error('Error fetching users:', error)
+        logger.error('Error fetching users:', error as Error)
         throw error
       }
     } else {
@@ -259,7 +260,7 @@ class APIClient {
         if (error) throw error
         return data || []
       } catch (error) {
-        console.error('Error fetching plan templates:', error)
+        logger.error('Error fetching plan templates:', error as Error)
         throw error
       }
     } else {
@@ -279,7 +280,7 @@ class APIClient {
         if (error) throw error
         return data
       } catch (error) {
-        console.error('Error creating plan template:', error)
+        logger.error('Error creating plan template:', error as Error)
         throw error
       }
     } else {
@@ -321,7 +322,7 @@ class APIClient {
         if (error) throw error
         return data
       } catch (error) {
-        console.error('Error creating plan from template:', error)
+        logger.error('Error creating plan from template:', error as Error)
         throw error
       }
     } else {
@@ -351,7 +352,7 @@ class APIClient {
         if (error) throw error
         return data
       } catch (error) {
-        console.error('Error creating daily check-in:', error)
+        logger.error('Error creating daily check-in:', error as Error)
         throw error
       }
     } else {
@@ -404,7 +405,7 @@ class APIClient {
         
         return { url: urlData.publicUrl, id: fileRecord.id }
       } catch (error) {
-        console.error('Error uploading file:', error)
+        logger.error('Error uploading file:', error as Error)
         throw error
       }
     } else {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { logger } from '../../lib/logger'
 import { motion } from 'framer-motion'
 import { Calendar, Plus, Clock, MapPin, User } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -24,7 +25,7 @@ export function AppointmentsPage() {
       const data = await api.getAppointments(user.id, user.role)
       setAppointments(data)
     } catch (error) {
-      console.error('Error fetching appointments:', error)
+      logger.error('Error fetching appointments:', error as Error)
     } finally {
       setLoading(false)
     }

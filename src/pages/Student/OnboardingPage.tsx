@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { logger } from '../../lib/logger'
 import { motion } from 'framer-motion'
 import { User, GraduationCap, Shield, CheckCircle, ArrowRight } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -178,7 +179,7 @@ export function OnboardingPage() {
             <button
               onClick={() => {
                 // Complete onboarding
-                console.log('Onboarding completed!')
+                logger.debug('Onboarding completed!')
               }}
               disabled={!allStepsCompleted}
               className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
@@ -205,7 +206,7 @@ function ProfileStep({ onComplete }: { onComplete: () => void }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // Save profile data
-    console.log('Profile data:', formData)
+    logger.debug('Profile data:', formData)
     onComplete()
   }
 
@@ -287,7 +288,7 @@ function EmergencyStep({ onComplete }: { onComplete: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Emergency contact data:', formData)
+    logger.debug('Emergency contact data:', formData)
     onComplete()
   }
 
@@ -353,7 +354,7 @@ function MedicalStep({ onComplete }: { onComplete: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Medical data:', formData)
+    logger.debug('Medical data:', formData)
     onComplete()
   }
 

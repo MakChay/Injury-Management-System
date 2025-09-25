@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { logger } from '../../lib/logger'
 import { motion } from 'framer-motion'
 import { Users, Search, Filter, Plus, Edit, Trash2, Mail, Phone } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -22,7 +23,7 @@ export function ManageUsersPage() {
       const data = await api.getUsers()
       setUsers(data)
     } catch (error) {
-      console.error('Error fetching users:', error)
+      logger.error('Error fetching users:', error as Error)
     } finally {
       setLoading(false)
     }

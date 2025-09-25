@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { logger } from '../../lib/logger'
 import { motion } from 'framer-motion'
 import { AlertTriangle, Calendar, Activity, Eye, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -26,7 +27,7 @@ export function MyInjuriesPage() {
       const data = await api.getInjuries(user.id)
       setInjuries(data)
     } catch (error) {
-      console.error('Error fetching injuries:', error)
+      logger.error('Error fetching injuries:', error as Error)
     } finally {
       setLoading(false)
     }
