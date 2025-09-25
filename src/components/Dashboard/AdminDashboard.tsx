@@ -20,6 +20,10 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [workload, setWorkload] = useState<any[]>([])
   const [sportData, setSportData] = useState<any[]>([])
+  const [incidenceBySport, setIncidenceBySport] = useState<any[]>([])
+  const [timeLossBySeverity, setTimeLossBySeverity] = useState<any[]>([])
+  const [recurrenceRate, setRecurrenceRate] = useState(0)
+  const [rtpTime, setRtpTime] = useState<number | null>(null)
 
   useEffect(() => {
     fetchDashboardData()
@@ -36,6 +40,8 @@ export function AdminDashboard() {
         api.getInjuries(),
       ])
       const appointments = await api.getAppointments('', 'admin' as any)
+      const allInjuries = await api.getAllInjuries()
+      const allRtp = await api.getAllRtpChecklists()
 
       const activeInjuries = injuries.filter(i => 
         ['reported', 'assigned', 'in_treatment', 'recovering'].includes(i.status)
@@ -89,6 +95,44 @@ export function AdminDashboard() {
       }))
 
       setSeverityData(severityChartData)
+
+      // Incidence by sport (injuries per sport from profiles join approximation using students list)
+      const sportMap: Record<string, number> = {}
+      ;(allInjuries as any[]).forEach((inj: any) => {
+        const s = students.find((st: any) => st.id === inj.student_id)
+        const key = (s?.sport || 'Unknown') as string
+        sportMap[key] = (sportMap[key] || 0) + 1
+      })
+      setIncidenceBySport(Object.entries(sportMap).map(([name, value]) => ({ name, value })))
+
+      // Time-loss proxy by severity: assume default durations for visualization
+      const lossDefaults: Record<string, number> = { mild: 7, moderate: 21, severe: 42, critical: 84 }
+      const lossAgg: Record<string, number> = {}
+      ;(allInjuries as any[]).forEach((inj: any) => {
+        const sv = inj.severity || 'mild'
+        lossAgg[sv] = (lossAgg[sv] || 0) + (lossDefaults[sv] || 7)
+      })
+      setTimeLossBySeverity(Object.entries(lossAgg).map(([name, value]) => ({ name, value })))
+
+      // Recurrence: same injury_type reported more than once by same student
+      const keyCount: Record<string, number> = {}
+      ;(allInjuries as any[]).forEach((inj: any) => {
+        const key = `${inj.student_id}:${inj.injury_type}`
+        keyCount[key] = (keyCount[key] || 0) + 1
+      })
+      const recurrences = Object.values(keyCount).filter((c) => c > 1).length
+      setRecurrenceRate(allInjuries.length ? Math.round((recurrences / allInjuries.length) * 100) : 0)
+
+      // RTP time: difference between created_at and cleared_at for cleared checklists
+      const cleared = (allRtp as any[]).filter((r: any) => r.status === 'cleared' && r.cleared_at)
+      if (cleared.length) {
+        const avg = Math.round(
+          cleared.reduce((sum: number, r: any) => sum + (new Date(r.cleared_at).getTime() - new Date(r.created_at).getTime()), 0) / cleared.length / (1000*60*60*24)
+        )
+        setRtpTime(avg)
+      } else {
+        setRtpTime(null)
+      }
 
       // Per-sport distribution
       const studentSports = students.reduce((acc: any, s: any) => {
@@ -347,6 +391,56 @@ export function AdminDashboard() {
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
+
+        {/* Incidence by Sport */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.75 }}
+          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+        >
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Injury Incidence by Sport</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={incidenceBySport}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" interval={0} angle={-15} textAnchor="end" height={60} />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="value" fill="#6366f1" radius={[4,4,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Time-loss by Severity */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+        >
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Estimated Time-loss by Severity (days)</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={timeLossBySeverity}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="value" fill="#f97316" radius={[4,4,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+      </div>
+
+      {/* KPI Row: Recurrence and RTP time */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="text-sm text-gray-600">Recurrence Rate</div>
+          <div className="text-3xl font-bold">{recurrenceRate}%</div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="text-sm text-gray-600">Avg. RTP Time</div>
+          <div className="text-3xl font-bold">{rtpTime !== null ? `${rtpTime} days` : '—'}</div>
+        </div>
       </div>
     </div>
   )

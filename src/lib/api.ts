@@ -41,6 +41,18 @@ export const api = {
     const { data } = await supabase.from('rtp_checklists').select('*').eq('student_id', student_id).limit(1).single()
     return data
   },
+  async getAllRtpChecklists() {
+    if (!isSupabaseEnabled || !supabase) return []
+    const { data, error } = await supabase.from('rtp_checklists').select('*')
+    if (error) throw error
+    return data
+  },
+  async getAllInjuries() {
+    if (!isSupabaseEnabled || !supabase) return []
+    const { data, error } = await supabase.from('injuries').select('*')
+    if (error) throw error
+    return data
+  },
   async createSessionNote(payload: { assignment_id: string; practitioner_id: string; soap_notes: string; vitals?: any; contraindications?: string }) {
     if (!isSupabaseEnabled || !supabase) return { id: `note-${Date.now()}`, ...payload }
     const { data, error } = await supabase.from('session_notes').insert(payload).select('*').single()

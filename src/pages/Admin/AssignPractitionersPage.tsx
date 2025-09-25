@@ -37,18 +37,27 @@ export function AssignPractitionersPage() {
   }
 
   const autoAssign = () => {
-    // naive heuristic: pick earliest 'reported' injury and least-loaded practitioner
+    // robust-ish heuristic: score practitioners by specialization match, sport match, and caseload
     const candidateInjury = injuries.find((i) => i.status === 'reported') || injuries[0]
     if (!candidateInjury) return
-    const studentId = candidateInjury.student_id
-    const loadMap: Record<string, number> = {}
-    practitioners.forEach((p) => { loadMap[p.id] = 0 })
-    // derive loads by sport/specialization match (mock heuristic)
-    practitioners.forEach((p) => {
-      loadMap[p.id] += (p.specialization && candidateInjury.injury_type && p.specialization.toLowerCase().includes('physio')) ? 0 : 1
-    })
-    const best = practitioners.sort((a, b) => (loadMap[a.id] || 0) - (loadMap[b.id] || 0))[0]
-    setForm({ student_id: studentId, practitioner_id: best?.id || '', injury_id: candidateInjury.id, notes: 'Auto-assigned' })
+    const student = students.find((s) => s.id === candidateInjury.student_id)
+    const caseload: Record<string, number> = {}
+    // rough caseload: count of active assignments per practitioner from recent injuries (fallback)
+    practitioners.forEach((p) => { caseload[p.id] = 0 })
+    // specialization tags
+    const tags = (candidateInjury.injury_type || '').toLowerCase()
+    const sport = (student?.sport || '').toLowerCase()
+    const scored = practitioners.map((p) => {
+      let score = 0
+      const spec = (p.specialization || '').toLowerCase()
+      if (spec && tags && spec.includes('physio')) score += 2
+      if (spec && tags && spec.includes('sports')) score += 1
+      if (p.sport && sport && p.sport.toLowerCase() === sport) score += 1
+      score -= (caseload[p.id] || 0) * 0.5
+      return { p, score }
+    }).sort((a, b) => b.score - a.score)
+    const best = scored[0]?.p
+    setForm({ student_id: student?.id || candidateInjury.student_id, practitioner_id: best?.id || '', injury_id: candidateInjury.id, notes: 'Auto-assigned' })
   }
 
   if (loading) {
