@@ -1,336 +1,386 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
+import { useReminders } from './hooks/useReminders'
 import { Layout } from './components/Layout/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { PageLoading } from './components/LoadingSpinner'
+
+// Import page components directly (temporarily disable lazy loading for debugging)
+import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/Auth/LoginPage'
 import { RegisterPage } from './pages/Auth/RegisterPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { ReportInjuryPage } from './pages/Student/ReportInjuryPage'
-import { MyInjuriesPage } from './pages/Student/MyInjuriesPage'
-import { AssignedAthletesPage } from './pages/Practitioner/AssignedAthletesPage'
-import { ManageUsersPage } from './pages/Admin/ManageUsersPage'
-import { AppointmentsPage } from './pages/Shared/AppointmentsPage'
-import { MessagesPage } from './pages/Shared/MessagesPage'
-import { FilesPage } from './pages/Shared/FilesPage'
-import { RecoveryLogsPage } from './pages/Practitioner/RecoveryLogsPage'
-import { AssignPractitionersPage } from './pages/Admin/AssignPractitionersPage'
-import { LogoutPage } from './pages/Auth/LogoutPage'
 import { ForgotPasswordPage } from './pages/Auth/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/Auth/ResetPasswordPage'
 import { VerifyEmailPage } from './pages/Auth/VerifyEmailPage'
-//
-import { TreatmentPlansPage } from './pages/Practitioner/TreatmentPlansPage'
-import { SessionNotesPage } from './pages/Practitioner/SessionNotesPage'
-import { TemplateBuilderPage } from './pages/Practitioner/TemplateBuilderPage'
-import { ProfilePage } from './pages/Settings/ProfilePage'
+import { LogoutPage } from './pages/Auth/LogoutPage'
+
+// Student pages
+import { ReportInjuryPage } from './pages/Student/ReportInjuryPage'
+import { MyInjuriesPage } from './pages/Student/MyInjuriesPage'
 import { OnboardingPage } from './pages/Student/OnboardingPage'
 import { DailyCheckInPage } from './pages/Student/DailyCheckInPage'
 import { RTPChecklistPage } from './pages/Student/RTPChecklistPage'
 import { LearningHubPage } from './pages/Student/LearningHubPage'
-import { useReminders } from './hooks/useReminders'
+import { RecoveryPlansPage } from './pages/Student/RecoveryPlansPage'
+
+// Practitioner pages
+import { AssignedAthletesPage } from './pages/Practitioner/AssignedAthletesPage'
+import { RecoveryLogsPage } from './pages/Practitioner/RecoveryLogsPage'
+import { SessionNotesPage } from './pages/Practitioner/SessionNotesPage'
+import { TemplateBuilderPage } from './pages/Practitioner/TemplateBuilderPage'
+import { TreatmentPlansPage } from './pages/Practitioner/TreatmentPlansPage'
+
+// Admin pages
+import { ManageUsersPage } from './pages/Admin/ManageUsersPage'
+import { AssignPractitionersPage } from './pages/Admin/AssignPractitionersPage'
 import { AnalyticsPage } from './pages/Admin/AnalyticsPage'
 import { SystemStatusPage } from './pages/Admin/SystemStatusPage'
+
+// Shared pages
+import { AppointmentsPage } from './pages/Shared/AppointmentsPage'
+import { MessagesPage } from './pages/Shared/MessagesPage'
+import { FilesPage } from './pages/Shared/FilesPage'
+import { ProfilePage } from './pages/Settings/ProfilePage'
+
+// Loading component
+const LoadingScreen = () => <PageLoading />
+
 
 function App() {
   const { user, loading } = useAuth()
   useReminders()
 
+
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-6">
-            <span className="text-white font-bold text-2xl">DUT</span>
-          </div>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-600 mt-6 text-lg">Loading DUT Athletic Injury Management...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   return (
-    <Router>
-      <Routes>
+    <ErrorBoundary>
+      <Router>
+        <Routes>
         {/* Public routes */}
-        <Route
-          path="/login"
-          element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+        <Route 
+          path="/login" 
+          element={
+            user ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <LoginPage />
+            )
+          } 
         />
-        {/* Auth aliases */}
-        <Route
-          path="/signin"
-          element={<Navigate to="/login" replace />}
+        <Route 
+          path="/register" 
+          element={
+            user ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <RegisterPage />
+            )
+          } 
         />
-        <Route
-          path="/sign-in"
-          element={<Navigate to="/login" replace />}
+        <Route 
+          path="/forgot-password" 
+          element={
+            user ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              
+                <ForgotPasswordPage />
+              
+            )
+          } 
         />
-        <Route
-          path="/register"
-          element={user ? <Navigate to="/dashboard" replace /> : <RegisterPage />}
-        />
-        <Route
-          path="/signup"
-          element={<Navigate to="/register" replace />}
-        />
-        <Route
-          path="/sign-up"
-          element={<Navigate to="/register" replace />}
-        />
-        <Route
-          path="/auth/login"
-          element={<Navigate to="/login" replace />}
-        />
-        <Route
-          path="/auth/register"
-          element={<Navigate to="/register" replace />}
-        />
-
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/logout" element={<LogoutPage />} />
-        <Route path="/signout" element={<Navigate to="/logout" replace />} />
 
-        {/* Password reset & verification */}
-        <Route
-          path="/forgot-password"
-          element={user ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />}
-        />
-        <Route
-          path="/reset-password"
-          element={<ResetPasswordPage />}
-        />
-        <Route
-          path="/verify-email"
-          element={<VerifyEmailPage />}
-        />
-        <Route
-          path="/auth/verify"
-          element={<Navigate to="/verify-email" replace />}
-        />
+        {/* Auth aliases */}
+        <Route path="/signin" element={<Navigate to="/login" replace />} />
+        <Route path="/sign-in" element={<Navigate to="/login" replace />} />
+        <Route path="/signup" element={<Navigate to="/register" replace />} />
+        <Route path="/sign-up" element={<Navigate to="/register" replace />} />
+        <Route path="/auth/login" element={<Navigate to="/login" replace />} />
+        <Route path="/auth/register" element={<Navigate to="/register" replace />} />
+        <Route path="/signout" element={<Navigate to="/logout" replace />} />
+        <Route path="/auth/verify" element={<Navigate to="/verify-email" replace />} />
 
         {/* Protected routes */}
-        <Route
-          path="/dashboard"
+        <Route 
+          path="/dashboard" 
           element={
             <ProtectedRoute>
               <Layout>
-                <DashboardPage />
+                
+                  <DashboardPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-
-        {/* Student routes */}
-        <Route
-          path="/report-injury"
+        
+        {/* Student-specific routes */}
+        <Route 
+          path="/report-injury" 
           element={
             <ProtectedRoute requiredRole="student">
               <Layout>
-                <ReportInjuryPage />
+                
+                  <ReportInjuryPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-        <Route
-          path="/onboarding"
+        <Route 
+          path="/my-injuries" 
           element={
             <ProtectedRoute requiredRole="student">
               <Layout>
-                <OnboardingPage />
+                
+                  <MyInjuriesPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-        <Route
-          path="/daily-checkin"
+        <Route 
+          path="/onboarding" 
           element={
             <ProtectedRoute requiredRole="student">
               <Layout>
-                <DailyCheckInPage />
+                
+                  <OnboardingPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-        <Route
-          path="/rtp-checklist"
+        <Route 
+          path="/daily-checkin" 
           element={
             <ProtectedRoute requiredRole="student">
               <Layout>
-                <RTPChecklistPage />
+                
+                  <DailyCheckInPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-        <Route
-          path="/learning-hub"
+        <Route 
+          path="/rtp-checklist" 
           element={
             <ProtectedRoute requiredRole="student">
               <Layout>
-                <LearningHubPage />
+                
+                  <RTPChecklistPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-
-        <Route
-          path="/my-injuries"
+        <Route 
+          path="/learning-hub" 
           element={
             <ProtectedRoute requiredRole="student">
               <Layout>
-                <MyInjuriesPage />
+                
+                  <LearningHubPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-
-        {/* Practitioner routes */}
-        <Route
-          path="/assigned-athletes"
+        <Route 
+          path="/recovery-plans" 
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Layout>
+                
+                  <RecoveryPlansPage />
+                
+              </Layout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Practitioner-specific routes */}
+        <Route 
+          path="/assigned-athletes" 
           element={
             <ProtectedRoute requiredRole="practitioner">
               <Layout>
-                <AssignedAthletesPage />
+                
+                  <AssignedAthletesPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-
-        <Route
-          path="/recovery-logs"
+        <Route 
+          path="/recovery-logs" 
           element={
             <ProtectedRoute requiredRole="practitioner">
               <Layout>
-                <RecoveryLogsPage />
+                
+                  <RecoveryLogsPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-        <Route
-          path="/session-notes"
+        <Route 
+          path="/session-notes" 
           element={
             <ProtectedRoute requiredRole="practitioner">
               <Layout>
-                <SessionNotesPage />
+                
+                  <SessionNotesPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-        <Route
-          path="/template-builder"
+        <Route 
+          path="/template-builder" 
           element={
             <ProtectedRoute requiredRole="practitioner">
               <Layout>
-                <TemplateBuilderPage />
+                
+                  <TemplateBuilderPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-
-        {/* Admin routes */}
-        <Route
-          path="/manage-users"
+        <Route 
+          path="/treatment-plans" 
+          element={
+            <ProtectedRoute requiredRole="practitioner">
+              <Layout>
+                
+                  <TreatmentPlansPage />
+                
+              </Layout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Admin-specific routes */}
+        <Route 
+          path="/manage-users" 
           element={
             <ProtectedRoute requiredRole="admin">
               <Layout>
-                <ManageUsersPage />
+                
+                  <ManageUsersPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-
-        <Route
-          path="/assign-practitioners"
+        <Route 
+          path="/assign-practitioners" 
           element={
             <ProtectedRoute requiredRole="admin">
               <Layout>
-                <AssignPractitionersPage />
+                
+                  <AssignPractitionersPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-        <Route
-          path="/system-status"
+        <Route 
+          path="/analytics" 
           element={
             <ProtectedRoute requiredRole="admin">
               <Layout>
-                <SystemStatusPage />
+                
+                  <AnalyticsPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-
-        <Route
-          path="/analytics"
+        <Route 
+          path="/system-status" 
           element={
             <ProtectedRoute requiredRole="admin">
               <Layout>
-                <AnalyticsPage />
+                
+                  <SystemStatusPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
 
-        {/* Shared routes */}
-        <Route
-          path="/appointments"
+        {/* Shared/General protected routes */}
+        <Route 
+          path="/appointments" 
           element={
             <ProtectedRoute>
               <Layout>
-                <AppointmentsPage />
+                
+                  <AppointmentsPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-
-        <Route
-          path="/messages"
+        <Route 
+          path="/messages" 
           element={
             <ProtectedRoute>
               <Layout>
-                <MessagesPage />
+                
+                  <MessagesPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-
-        <Route
-          path="/files"
+        <Route 
+          path="/files" 
           element={
             <ProtectedRoute>
               <Layout>
-                <FilesPage />
+                
+                  <FilesPage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-
-        <Route
-          path="/settings"
+        <Route 
+          path="/settings" 
           element={
             <ProtectedRoute>
               <Layout>
-                <ProfilePage />
+                
+                  <ProfilePage />
+                
               </Layout>
             </ProtectedRoute>
-          }
+          } 
         />
-
-        <Route
-          path="/treatment-plans"
-          element={
-            <ProtectedRoute requiredRole="practitioner">
-              <Layout>
-                <TreatmentPlansPage />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-
+        
         {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route 
+          path="/" 
+          element={<Navigate to={user ? "/dashboard" : "/register"} replace />} 
+        />
+        <Route 
+          path="*" 
+          element={<Navigate to={user ? "/dashboard" : "/register"} replace />} 
+        />
       </Routes>
     </Router>
+    </ErrorBoundary>
   )
 }
 

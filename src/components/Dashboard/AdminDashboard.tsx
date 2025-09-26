@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Users, Activity, TrendingUp, AlertTriangle, Calendar, UserPlus } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { logger } from '../../lib/logger'
 //
 import { api } from '../../lib/api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
@@ -199,7 +200,7 @@ export function AdminDashboard() {
       const practitionerMap = new Map((practitioners as any[]).map((p: any) => [p.id, p.full_name]))
       setWorkload(Object.entries(workloadMap).map(([id, count]) => ({ name: practitionerMap.get(id) || id, value: count })))
     } catch (error) {
-      console.error('Error fetching dashboard data:', error)
+      logger.error('Error fetching dashboard data:', error as Error)
     } finally {
       setLoading(false)
     }

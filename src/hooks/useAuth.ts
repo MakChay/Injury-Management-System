@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { mockAuth, type User } from '../lib/mockData'
 import { supabase, isSupabaseEnabled } from '../lib/supabase'
+import { logger } from '../lib/logger'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -74,11 +75,16 @@ export function useAuth() {
           // Demo: use mock user
           await new Promise(resolve => setTimeout(resolve, 300))
           const currentUser = mockAuth.getCurrentUser()
-          setUser(currentUser)
-          setProfile(currentUser)
+          if (currentUser) {
+            setUser(currentUser)
+            setProfile(currentUser)
+          } else {
+            setUser(null)
+            setProfile(null)
+          }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error)
+        logger.error('Auth initialization error:', error as Error)
       } finally {
         setLoading(false)
       }
@@ -92,6 +98,7 @@ export function useAuth() {
     try {
       if (isSupabaseEnabled && supabase) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+        console.log('SignIn response:', { user: data.user, session: data.session, error })
         if (error) return { error }
         const sessionUser = data.user
         if (!sessionUser) return { error: new Error('No user returned') }
@@ -101,6 +108,7 @@ export function useAuth() {
           .eq('id', sessionUser.id)
           .single()
         if (profileError) return { error: profileError as any }
+        console.log('Profile data:', profileRow)
         const authedUser: User = {
           id: profileRow.id,
           email: profileRow.email,
@@ -114,6 +122,7 @@ export function useAuth() {
           created_at: profileRow.created_at,
           updated_at: profileRow.updated_at,
         }
+        console.log('Setting user:', authedUser)
         setUser(authedUser)
         setProfile(authedUser)
         return { error: null }
@@ -122,8 +131,10 @@ export function useAuth() {
         if (mockError) {
           return { error: mockError }
         }
-        setUser(user)
-        setProfile(user)
+        if (user) {
+          setUser(user)
+          setProfile(user)
+        }
         return { error: null }
       }
     } catch (error: unknown) {
@@ -143,8 +154,10 @@ export function useAuth() {
         })
         if (error) return { error }
         const newUser = data.user
+        console.log('Signup response:', { user: newUser, session: data.session })
         // If email confirmations are enabled, session may be null; defer profile creation
         if (!data.session) {
+          console.log('No session - email verification required')
           return { error: null, pendingVerification: true }
         }
         if (!newUser) return { error: new Error('No user created') }
@@ -179,8 +192,10 @@ export function useAuth() {
         if (mockError) {
           return { error: mockError }
         }
-        setUser(user)
-        setProfile(user)
+        if (user) {
+          setUser(user)
+          setProfile(user)
+        }
         return { error: null }
       }
     } catch (error: any) {
@@ -234,10 +249,11 @@ export function useAuth() {
       } else {
         await mockAuth.signOut()
       }
+    } catch (error) {
+      logger.error('Sign out error:', error as Error)
+    } finally {
       setUser(null)
       setProfile(null)
-    } catch (error) {
-      console.error('Sign out error:', error)
     }
   }
 

@@ -1,94 +1,109 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { logger } from '../../lib/logger'
 import { motion } from 'framer-motion'
-import { UploadCloud, FileText } from 'lucide-react'
+import { Upload, File, Download, Trash2, Search, Filter } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import { api } from '../../lib/api'
 
 export function FilesPage() {
   const { user } = useAuth()
-  const [files, setFiles] = useState<any[]>([])
-  const [uploading, setUploading] = useState(false)
-  const [selected, setSelected] = useState<File | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [fileType, setFileType] = useState<'all' | 'image' | 'document' | 'video'>('all')
 
-  useEffect(() => {
-    if (!user) return
-    load()
-  }, [user])
-
-  const load = async () => {
-    if (!user) return
-    const data = await api.getFiles(user.id)
-    setFiles(data)
-  }
-
-  const upload = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user || !selected) return
-    try {
-      setUploading(true)
-      const storagePath = `${user.id}/${Date.now()}_${selected.name}`
-      await api.uploadFile(selected, storagePath)
-      await api.linkFileRow({ uploaded_by: user.id, file_url: storagePath, file_type: selected.type || 'application/octet-stream' })
-      setSelected(null)
-      await load()
-      // @ts-ignore
-      const { pushToast } = await import('../../components/Toaster')
-      pushToast({ type: 'success', message: 'File uploaded' })
-    } finally {
-      setUploading(false)
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      // Handle file upload
+      logger.debug('Uploading files:', files)
     }
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Files</h1>
-          <p className="text-gray-600">Upload and manage your files</p>
+    <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+            <File className="w-6 h-6 text-orange-600" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Files</h1>
+            <p className="text-gray-600">Manage your files and documents</p>
+          </div>
         </div>
-      </div>
+        <label className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 hover:bg-blue-700 transition-colors cursor-pointer">
+          <Upload className="w-5 h-5" />
+          <span>Upload Files</span>
+          <input
+            type="file"
+            multiple
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+        </label>
+      </motion.div>
 
-      <form onSubmit={upload} className="bg-white border rounded-lg p-4 flex items-center justify-between">
-        <input type="file" onChange={(e) => setSelected(e.target.files?.[0] || null)} />
-        <motion.button whileTap={{ scale: 0.98 }} disabled={!selected || uploading} className="bg-blue-600 disabled:opacity-50 text-white px-4 py-2 rounded flex items-center space-x-2">
-          <UploadCloud className="w-4 h-4" />
-          <span>{uploading ? 'Uploading...' : 'Upload'}</span>
-        </motion.button>
-      </form>
+      {/* Search and Filter */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+      >
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search files..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Filter className="w-5 h-5 text-gray-400" />
+            <select
+              value={fileType}
+              onChange={(e) => setFileType(e.target.value as any)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Types</option>
+              <option value="image">Images</option>
+              <option value="document">Documents</option>
+              <option value="video">Videos</option>
+            </select>
+          </div>
+        </div>
+      </motion.div>
 
-      <div className="bg-white border rounded-lg">
-        <div className="p-4 border-b">
-          <h2 className="font-semibold">Your Files</h2>
+      {/* Files Grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+      >
+        <div className="text-center py-12">
+          <File className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No files uploaded</h3>
+          <p className="text-gray-600 mb-4">
+            Upload files to share with your team or store important documents.
+          </p>
+          <label className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer inline-flex items-center space-x-2">
+            <Upload className="w-4 h-4" />
+            <span>Upload Your First File</span>
+            <input
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </label>
         </div>
-        <div className="divide-y">
-          {files.map((f) => (
-            <div key={f.id} className="p-4 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <FileText className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="font-medium break-all">{f.file_url}</div>
-                  <div className="text-xs text-gray-500">{f.file_type}</div>
-                </div>
-              </div>
-              <a
-                className="text-blue-600 text-sm"
-                href={"#"}
-                onClick={async (e) => {
-                  e.preventDefault()
-                  const url = await api.getSignedUrl(f.file_url)
-                  window.open(url, '_blank')
-                }}
-              >
-                Open
-              </a>
-            </div>
-          ))}
-          {files.length === 0 && (
-            <div className="p-6 text-center text-gray-500">No files yet.</div>
-          )}
-        </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
-

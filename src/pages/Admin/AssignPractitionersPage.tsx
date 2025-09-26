@@ -1,144 +1,37 @@
-import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Activity, Check, Wand2 } from 'lucide-react'
-import { api } from '../../lib/api'
-import { useAuth } from '../../hooks/useAuth'
+import { UserPlus, Users, Search } from 'lucide-react'
 
 export function AssignPractitionersPage() {
-  const { user } = useAuth()
-  const [students, setStudents] = useState<any[]>([])
-  const [practitioners, setPractitioners] = useState<any[]>([])
-  const [injuries, setInjuries] = useState<any[]>([])
-  const [form, setForm] = useState({ student_id: '', practitioner_id: '', injury_id: '', notes: '' })
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    load()
-  }, [])
-
-  const load = async () => {
-    setLoading(true)
-    const [stu, prac, inj] = await Promise.all([
-      api.getUsers('student'),
-      api.getUsers('practitioner'),
-      api.getInjuries(),
-    ])
-    setStudents(stu)
-    setPractitioners(prac)
-    setInjuries(inj)
-    setLoading(false)
-  }
-
-  const assign = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
-    await api.assignPractitioner({ ...form, assigned_by: user.id })
-    setForm({ student_id: '', practitioner_id: '', injury_id: '', notes: '' })
-  }
-
-  const autoAssign = () => {
-    // robust-ish heuristic: score practitioners by specialization match, sport match, and caseload
-    const candidateInjury = injuries.find((i) => i.status === 'reported') || injuries[0]
-    if (!candidateInjury) return
-    const student = students.find((s) => s.id === candidateInjury.student_id)
-    const caseload: Record<string, number> = {}
-    // rough caseload: count of active assignments per practitioner from recent injuries (fallback)
-    practitioners.forEach((p) => { caseload[p.id] = 0 })
-    // specialization tags
-    const tags = (candidateInjury.injury_type || '').toLowerCase()
-    const sport = (student?.sport || '').toLowerCase()
-    const scored = practitioners.map((p) => {
-      let score = 0
-      const spec = (p.specialization || '').toLowerCase()
-      if (spec && tags && spec.includes('physio')) score += 2
-      if (spec && tags && spec.includes('sports')) score += 1
-      if (p.sport && sport && p.sport.toLowerCase() === sport) score += 1
-      score -= (caseload[p.id] || 0) * 0.5
-      return { p, score }
-    }).sort((a, b) => b.score - a.score)
-    const best = scored[0]?.p
-    setForm({ student_id: student?.id || candidateInjury.student_id, practitioner_id: best?.id || '', injury_id: candidateInjury.id, notes: 'Auto-assigned' })
-  }
-
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Assignments</h1>
-          <p className="text-gray-600">Assign practitioners to student injuries</p>
-        </div>
-        <button onClick={autoAssign} className="px-3 py-2 border rounded flex items-center space-x-2 hover:bg-gray-50"><Wand2 className="w-4 h-4" /><span>Auto-assign</span></button>
-      </div>
-
-      <form onSubmit={assign} className="bg-white border rounded-lg p-4 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Student</label>
-            <select value={form.student_id} onChange={(e) => setForm({ ...form, student_id: e.target.value })} className="w-full border rounded px-3 py-2" required>
-              <option value="">Select student</option>
-              {students.map((s) => (
-                <option key={s.id} value={s.id}>{s.full_name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Practitioner</label>
-            <select value={form.practitioner_id} onChange={(e) => setForm({ ...form, practitioner_id: e.target.value })} className="w-full border rounded px-3 py-2" required>
-              <option value="">Select practitioner</option>
-              {practitioners.map((p) => (
-                <option key={p.id} value={p.id}>{p.full_name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Injury</label>
-            <select value={form.injury_id} onChange={(e) => setForm({ ...form, injury_id: e.target.value })} className="w-full border rounded px-3 py-2" required>
-              <option value="">Select injury</option>
-              {injuries.map((i) => (
-                <option key={i.id} value={i.id}>{i.injury_type} • {i.severity}</option>
-              ))}
-            </select>
-          </div>
+    <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center space-x-3"
+      >
+        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+          <UserPlus className="w-6 h-6 text-green-600" />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Notes</label>
-          <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="w-full border rounded px-3 py-2" />
+          <h1 className="text-3xl font-bold text-gray-900">Assign Practitioners</h1>
+          <p className="text-gray-600">Assign practitioners to student-athletes</p>
         </div>
-        <div className="flex justify-end">
-          <motion.button whileTap={{ scale: 0.98 }} className="bg-blue-600 text-white px-4 py-2 rounded flex items-center space-x-2">
-            <Check className="w-4 h-4" />
-            <span>Assign</span>
-          </motion.button>
-        </div>
-      </form>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white border rounded-lg">
-          <div className="p-4 border-b flex items-center space-x-2"><Users className="w-5 h-5 text-blue-600" /><h2 className="font-semibold">Students</h2></div>
-          <div className="divide-y">
-            {students.map((s) => (
-              <div key={s.id} className="p-4">{s.full_name} <span className="text-xs text-gray-500">{s.email}</span></div>
-            ))}
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+      >
+        <div className="text-center py-12">
+          <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Assignment Interface</h3>
+          <p className="text-gray-600">
+            This page will contain the interface for assigning practitioners to students.
+          </p>
         </div>
-        <div className="bg-white border rounded-lg">
-          <div className="p-4 border-b flex items-center space-x-2"><Activity className="w-5 h-5 text-purple-600" /><h2 className="font-semibold">Recent Injuries</h2></div>
-          <div className="divide-y">
-              {injuries.slice(0, 8).map((i) => (
-              <div key={i.id} className="p-4">{i.injury_type} • {i.severity} • {new Date(i.date_reported).toLocaleDateString()}</div>
-            ))}
-          </div>
-        </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
-

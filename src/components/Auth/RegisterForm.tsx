@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, User, Phone, GraduationCap } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -19,9 +19,18 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [shouldNavigate, setShouldNavigate] = useState(false)
   
-  const { signUp } = useAuth()
+  const { signUp, user } = useAuth()
   const navigate = useNavigate()
+
+  // Navigate to dashboard when user is set after successful registration
+  useEffect(() => {
+    if (shouldNavigate && user) {
+      navigate('/dashboard')
+      setShouldNavigate(false)
+    }
+  }, [user, shouldNavigate, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,14 +45,19 @@ export function RegisterForm() {
 
     try {
       const result = await signUp(formData) as any
+      console.log('Signup result:', result)
       if (result?.error) {
         setError(result.error.message)
       } else if (result?.pendingVerification) {
+        console.log('Redirecting to verify-email')
         navigate('/verify-email', { state: { email: formData.email } })
       } else {
-        navigate('/dashboard')
+        console.log('Setting shouldNavigate to true')
+        // Set flag to navigate when user state is updated
+        setShouldNavigate(true)
       }
     } catch (error) {
+      console.error('Signup error:', error)
       setError('An unexpected error occurred')
     } finally {
       setLoading(false)
@@ -236,15 +250,18 @@ export function RegisterForm() {
         disabled={loading}
         className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {loading ? 'Creating Account...' : 'Create Account'}
+        {loading ? 'Creating Account...' : 'Get Started - Create Account'}
       </motion.button>
 
-      <div className="text-center">
+      <div className="text-center space-y-2">
+        <p className="text-xs text-gray-500">
+          By creating an account, you'll be able to report injuries, track recovery, and communicate with health practitioners.
+        </p>
         <Link
           to="/login"
           className="text-sm text-blue-600 hover:text-blue-500 font-medium"
         >
-          Already have an account? Sign in here
+          Already have an account? Sign in instead
         </Link>
       </div>
     </form>

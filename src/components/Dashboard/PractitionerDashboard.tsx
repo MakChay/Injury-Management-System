@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Users, Calendar, ClipboardList, Clock, CheckCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { logger } from '../../lib/logger'
 import { mockAPI, mockUsers, type Assignment, type Appointment, type User } from '../../lib/mockData'
 import { api } from '../../lib/api'
 import { useAuth } from '../../hooks/useAuth'
@@ -90,7 +91,7 @@ export function PractitionerDashboard() {
       setRecentAssignments(enrichedAssignments.slice(0, 3))
       setUpcomingAppointments(enrichedAppointments)
     } catch (error) {
-      console.error('Error fetching dashboard data:', error)
+      logger.error('Error fetching dashboard data:', error as Error)
     } finally {
       setLoading(false)
     }

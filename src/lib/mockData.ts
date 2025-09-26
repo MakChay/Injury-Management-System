@@ -7,6 +7,10 @@ export interface User {
   profile_pic?: string
   phone?: string
   student_number?: string
+  sport?: string
+  position?: string
+  dominant_side?: string
+  injury_history?: any
   specialization?: string
   bio?: string
   created_at: string
@@ -104,6 +108,8 @@ export interface TreatmentPlanInstance {
 }
 
 // Mock current user - change this to test different roles
+// To test with a logged-in user, change getCurrentUser() to return this user
+// To test with no user (register page first), keep getCurrentUser() returning null
 export const mockCurrentUser: User = {
   id: 'user-1',
   email: 'john.doe@dut4life.ac.za',
@@ -284,7 +290,7 @@ export const mockAuth = {
     return { error: null }
   },
   
-  getCurrentUser: () => mockCurrentUser
+  getCurrentUser: () => null // Start with no user to show register page first
 }
 
 export const mockAPI = {
